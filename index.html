@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>幼小衔接知识乐园</title>
+<style>
+:root {
+  --coral: #FF6B6B;
+  --coral-light: #FF8E8E;
+  --coral-pale: #FFF0F0;
+  --teal: #4ECDC4;
+  --teal-light: #6FE0DB;
+  --teal-pale: #E8FAF8;
+  --yellow: #FFE66D;
+  --yellow-pale: #FFFBE6;
+  --bg: #FFF9F5;
+  --white: #FFFFFF;
+  --text: #3D3D3D;
+  --text-light: #888888;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --shadow: 0 4px 20px rgba(0,0,0,0.06);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+  --font: 'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+canvas#confetti {
+  position: fixed; top:0; left:0; width:100%; height:100%;
+  pointer-events: none; z-index: 9999;
+}
+
+#app {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 16px 16px 24px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+
+header .greeting { font-size: 22px; font-weight: 600; }
+header .greeting .name { color: var(--coral); }
+header .star-badge {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--yellow-pale);
+  padding: 8px 16px; border-radius: 50px;
+  font-size: 20px; font-weight: 600;
+}
+header .star-badge .star-icon {
+  font-size: 26px;
+  animation: starPulse 2s ease-in-out infinite;
+}
+@keyframes starPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.admin-btn {
+  background: none; border: 2px dashed #ddd; color: #bbb;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.admin-btn:hover { border-color: var(--text-light); color: var(--text-light); }
+
+/* ---- Home Page ---- */
+.home-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-content: start;
+}
+
+.module-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: 3px solid transparent;
+}
+.module-card:active { transform: scale(0.95); }
+.module-card .emoji { font-size: 48px; margin-bottom: 8px; }
+.module-card .label { font-size: 22px; font-weight: 600; }
+.module-card .desc {
+  font-size: 14px; color: var(--text-light); margin-top: 4px;
+}
+
+.card-characters { border-color: var(--coral); }
+.card-characters .label { color: var(--coral); }
+.card-pinyin { border-color: var(--teal); }
+.card-pinyin .label { color: var(--teal); }
+.card-counting { border-color: #A78BFA; }
+.card-counting .label { color: #A78BFA; }
+.card-math { border-color: #F59E0B; }
+.card-math .label { color: #F59E0B; }
+
+/* ---- Quiz Page ---- */
+.quiz-container {
+  flex: 1;
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+.quiz-header {
+  display: flex; align-items: center; gap: 12px;
+}
+.back-btn {
+  background: var(--white); border: none;
+  width: 44px; height: 44px; border-radius: 50%;
+  font-size: 22px; cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+}
+.quiz-title { font-size: 22px; font-weight: 600; }
+
+.progress-wrap {
+  background: #eee; border-radius: 50px; height: 12px; overflow: hidden;
+}
+.progress-fill {
+  height: 100%; border-radius: 50px;
+  background: linear-gradient(90deg, var(--teal), var(--coral));
+  transition: width 0.4s ease;
+}
+
+.question-area {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 40px 20px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  min-height: 200px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 12px;
+}
+
+.question-label {
+  font-size: 18px; color: var(--text-light);
+}
+.question-emoji {
+  font-size: 72px; line-height: 1.2;
+}
+.question-text {
+  font-size: 48px; font-weight: 700; color: var(--coral);
+}
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.option-btn {
+  background: var(--white);
+  border: 3px solid #eee;
+  border-radius: var(--radius);
+  padding: 20px 12px;
+  font-size: 28px; font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: var(--shadow);
+  font-family: var(--font);
+  min-height: 80px;
+  display: flex; align-items: center; justify-content: center;
+}
+.option-btn:active { transform: scale(0.95); }
+.option-btn.correct {
+  border-color: var(--teal);
+  background: var(--teal-pale);
+  animation: popIn 0.4s ease;
+}
+.option-btn.wrong {
+  border-color: var(--coral);
+  background: var(--coral-pale);
+  animation: shake 0.5s ease;
+}
+.option-btn:disabled { pointer-events: none; opacity: 0.7; }
+
+/* ---- Animations ---- */
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0.5; }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-6px); }
+  80% { transform: translateX(6px); }
+}
+@keyframes starFly {
+  0% { transform: scale(1) translateY(0); opacity: 1; }
+  100% { transform: scale(0.5) translateY(-60px); opacity: 0; }
+}
+
+.feedback-overlay {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; z-index: 100;
+}
+.feedback-text {
+  font-size: 40px; font-weight: 700; opacity: 0;
+  animation: feedbackPop 1.2s ease forwards;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+@keyframes feedbackPop {
+  0% { opacity:0; transform: translateY(20px) scale(0.5); }
+  30% { opacity:1; transform: translateY(0) scale(1.1); }
+  50% { transform: translateY(0) scale(1); }
+  100% { opacity:0; transform: translateY(-30px) scale(0.8); }
+}
+
+/* ---- Results Page ---- */
+.results-container {
+  flex:1;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:20px;
+  text-align:center;
+}
+.results-emoji { font-size:80px; }
+.results-score { font-size:28px; font-weight:600; }
+.results-stars { font-size:24px; color:var(--coral); }
+.results-btn {
+  background: var(--teal); color: white; border: none;
+  padding: 16px 48px; border-radius: 50px;
+  font-size: 22px; font-weight: 600; cursor: pointer;
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font);
+  transition: transform 0.2s;
+}
+.results-btn:active { transform: scale(0.95); }
+
+/* ---- Admin Panel ---- */
+.admin-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 200; display: flex; align-items: flex-end;
+}
+.admin-panel {
+  background: var(--white); width: 100%; max-width: 520px;
+  margin: 0 auto; border-radius: 24px 24px 0 0;
+  max-height: 85vh; overflow-y: auto;
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.12);
+  padding: 24px 20px 40px;
+}
+.admin-panel h2 { font-size: 24px; font-weight: 600; margin-bottom: 16px; }
+.admin-section { margin-bottom: 20px; }
+.admin-section label { font-size: 16px; font-weight: 600; display: block; margin-bottom: 6px; }
+.admin-section input, .admin-section select {
+  width: 100%; padding: 12px 16px; border: 2px solid #eee;
+  border-radius: var(--radius-sm); font-size: 18px;
+  font-family: var(--font);
+}
+.admin-section input:focus { border-color: var(--teal); outline: none; }
+
+.admin-tabs {
+  display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;
+}
+.admin-tab {
+  padding: 8px 16px; border-radius: 50px;
+  border: 2px solid #eee; background: white;
+  font-size: 15px; cursor: pointer; white-space: nowrap;
+  font-family: var(--font);
+}
+.admin-tab.active { background: var(--teal-pale); border-color: var(--teal); }
+
+.question-list { display: flex; flex-direction: column; gap: 10px; }
+.question-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: #f8f8f8;
+  border-radius: var(--radius-sm); font-size: 16px;
+}
+.question-item .q-preview { flex:1; }
+.question-item .q-emoji { font-size: 28px; }
+.question-item button {
+  background: none; border: none; font-size: 18px; cursor: pointer;
+  padding: 4px 8px; border-radius: 8px;
+}
+.question-item .edit-btn { color: var(--teal); }
+.question-item .del-btn { color: var(--coral); }
+
+.admin-actions { display: flex; gap: 10px; margin-top: 16px; }
+.btn {
+  padding: 10px 20px; border-radius: 50px;
+  font-size: 16px; font-weight: 600; cursor: pointer; border: none;
+  font-family: var(--font);
+}
+.btn-primary { background: var(--teal); color: white; }
+.btn-danger { background: var(--coral); color: white; }
+.btn-outline { background: white; border: 2px solid #eee; }
+
+.admin-form {
+  background: var(--teal-pale); padding: 16px;
+  border-radius: var(--radius-sm); margin-top: 12px;
+}
+.admin-form input {
+  width: 100%; padding: 10px 14px; border: 2px solid #ddd;
+  border-radius: 8px; font-size: 16px; margin-bottom: 8px;
+  font-family: var(--font);
+}
+.admin-form .form-row { display: flex; gap: 8px; }
+.admin-form .form-row input { flex: 1; }
+
+.close-admin {
+  position: sticky; top: 0; float: right;
+  background: #eee; border: none; width: 36px; height: 36px;
+  border-radius: 50%; font-size: 18px; cursor: pointer;
+}
+
+.hidden { display: none !important; }
+
+@media (max-width: 400px) {
+  .home-grid { gap: 10px; }
+  .module-card { padding: 20px 12px; }
+  .module-card .emoji { font-size: 40px; }
+  .module-card .label { font-size: 18px; }
+  .question-emoji { font-size: 56px; }
+  .question-text { font-size: 40px; }
+  .option-btn { font-size: 24px; padding: 16px 10px; min-height: 68px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="confetti"></canvas>
+<div id="feedbackOverlay" class="feedback-overlay hidden">
+  <span id="feedbackText" class="feedback-text"></span>
+</div>
+
+<div id="app">
+  <header>
+    <div class="greeting">Hi, <span class="name" id="childName">宝宝</span></div>
+    <div class="star-badge">
+      <span class="star-icon">⭐</span>
+      <span id="starCount">0</span>
+    </div>
+    <button class="admin-btn" id="adminBtn" title="家长管理">🔧</button>
+  </header>
+
+  <!-- Home -->
+  <div id="viewHome" class="home-grid">
+    <div class="module-card card-characters" data-module="characters">
+      <div class="emoji">📖</div>
+      <div class="label">识字</div>
+      <div class="desc">认汉字，学词语</div>
+    </div>
+    <div class="module-card card-pinyin" data-module="pinyin">
+      <div class="emoji">🔤</div>
+      <div class="label">拼音</div>
+      <div class="desc">学声母和韵母</div>
+    </div>
+    <div class="module-card card-counting" data-module="counting">
+      <div class="emoji">🔢</div>
+      <div class="label">数数</div>
+      <div class="desc">数一数有多少</div>
+    </div>
+    <div class="module-card card-math" data-module="math">
+      <div class="emoji">🧮</div>
+      <div class="label">加减</div>
+      <div class="desc">10以内加减法</div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="viewQuiz" class="quiz-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="quizBack">←</button>
+      <span class="quiz-title" id="quizTitle"></span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <div class="question-area" id="questionArea"></div>
+    <div class="options-grid" id="optionsGrid"></div>
+  </div>
+
+  <!-- Results -->
+  <div id="viewResults" class="results-container hidden">
+    <div class="results-emoji" id="resultsEmoji"></div>
+    <div class="results-score" id="resultsScore"></div>
+    <div class="results-stars" id="resultsStars"></div>
+    <button class="results-btn" id="resultsBack">返回乐园</button>
+  </div>
+</div>
+
+<!-- Admin Panel Overlay -->
+<div id="adminOverlay" class="admin-overlay hidden">
+  <div class="admin-panel" id="adminPanel"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ========== STATE & STORAGE ========== */
+
+const STORAGE_KEY = 'knowledge_park_data';
+
+function defaultData() {
+  return {
+    childName: '宝宝',
+    stars: 0,
+    quizBank: {
+      characters: [
+        {emoji:'🍎',options:['苹果','香蕉','西瓜','葡萄'],correct:'苹果'},
+        {emoji:'🐱',options:['狗','兔子','猫','鱼'],correct:'猫'},
+        {emoji:'🌙',options:['太阳','月亮','星星','云朵'],correct:'月亮'},
+        {emoji:'👀',options:['耳朵','鼻子','眼睛','嘴巴'],correct:'眼睛'},
+        {emoji:'🟡',options:['红色','蓝色','黄色','绿色'],correct:'黄色'},
+        {emoji:'🍌',options:['苹果','西瓜','葡萄','香蕉'],correct:'香蕉'},
+        {emoji:'🐶',options:['猫','鱼','兔子','狗'],correct:'狗'},
+        {emoji:'☀️',options:['月亮','太阳','星星','雨'],correct:'太阳'},
+        {emoji:'👃',options:['眼睛','耳朵','嘴巴','鼻子'],correct:'鼻子'},
+        {emoji:'🌧️',options:['太阳','月亮','雨','星星'],correct:'雨'},
+        {emoji:'🍇',options:['苹果','葡萄','香蕉','西瓜'],correct:'葡萄'},
+        {emoji:'🐰',options:['猫','狗','兔子','鱼'],correct:'兔子'},
+        {emoji:'👂',options:['眼睛','鼻子','耳朵','嘴巴'],correct:'耳朵'},
+        {emoji:'🔵',options:['红色','黄色','绿色','蓝色'],correct:'蓝色'},
+        {emoji:'🍊',options:['香蕉','苹果','西瓜','橙子'],correct:'橙子'},
+        {emoji:'⭐',options:['太阳','月亮','雨','星星'],correct:'星星'},
+        {emoji:'🐟',options:['猫','狗','兔子','鱼'],correct:'鱼'},
+        {emoji:'👄',options:['眼睛','鼻子','耳朵','嘴巴'],correct:'嘴巴'},
+        {emoji:'🔴',options:['红色','黄色','蓝色','绿色'],correct:'红色'},
+        {emoji:'🟢',options:['红色','黄色','蓝色','绿色'],correct:'绿色'}
+      ],
+      pinyin: [
+        {pinyin:'mā',options:['妈','马','骂','麻'],correct:'妈'},
+        {pinyin:'bà',options:['八','把','爸','吧'],correct:'爸'},
+        {pinyin:'mǐ',options:['米','迷','密','蜜'],correct:'米'},
+        {pinyin:'huā',options:['化','画','花','话'],correct:'花'},
+        {pinyin:'gē',options:['个','各','歌','格'],correct:'歌'},
+        {pinyin:'dì',options:['低','敌','底','地'],correct:'地'},
+        {pinyin:'shū',options:['书','数','树','熟'],correct:'书'},
+        {pinyin:'shuǐ',options:['睡','水','税','谁'],correct:'水'},
+        {pinyin:'huǒ',options:['活','货','火','或'],correct:'火'},
+        {pinyin:'yú',options:['雨','语','鱼','玉'],correct:'鱼'},
+        {pinyin:'chē',options:['车','扯','彻','撤'],correct:'车'},
+        {pinyin:'niǎo',options:['鸟','牛','扭','钮'],correct:'鸟'},
+        {pinyin:'yuè',options:['约','越','月','乐'],correct:'月'},
+        {pinyin:'fēng',options:['风','峰','丰','封'],correct:'风'},
+        {pinyin:'xuě',options:['学','血','雪','削'],correct:'雪'},
+        {pinyin:'hé',options:['河','何','合','喝'],correct:'河'},
+        {pinyin:'cǎo',options:['操','草','曹','槽'],correct:'草'},
+        {pinyin:'xīng',options:['行','形','星','醒'],correct:'星'},
+        {pinyin:'yáng',options:['阳','养','样','羊'],correct:'羊'},
+        {pinyin:'niú',options:['扭','牛','纽','钮'],correct:'牛'}
+      ]
+    }
+  };
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultData();
+    const parsed = JSON.parse(raw);
+    if (!parsed.quizBank) parsed.quizBank = defaultData().quizBank;
+    if (!parsed.childName) parsed.childName = '宝宝';
+    if (typeof parsed.stars !== 'number') parsed.stars = 0;
+    if (!parsed.quizBank.characters) parsed.quizBank.characters = defaultData().quizBank.characters;
+    if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
+    return parsed;
+  } catch(e) {
+    return defaultData();
+  }
+}
+
+function saveData(data) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch(e) {}
+}
+
+let appData = loadData();
+
+/* ========== DOM REFS ========== */
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+const viewHome = $('#viewHome');
+const viewQuiz = $('#viewQuiz');
+const viewResults = $('#viewResults');
+const adminOverlay = $('#adminOverlay');
+const adminPanel = $('#adminPanel');
+const childNameEl = $('#childName');
+const starCountEl = $('#starCount');
+const progressFill = $('#progressFill');
+const questionArea = $('#questionArea');
+const optionsGrid = $('#optionsGrid');
+const quizTitle = $('#quizTitle');
+const resultsEmoji = $('#resultsEmoji');
+const resultsScore = $('#resultsScore');
+const resultsStars = $('#resultsStars');
+const feedbackOverlay = $('#feedbackOverlay');
+const feedbackText = $('#feedbackText');
+
+/* ========== HELPERS ========== */
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+
+function showFeedback(text) {
+  feedbackOverlay.classList.remove('hidden');
+  feedbackText.textContent = text;
+  feedbackText.style.animation = 'none';
+  void feedbackText.offsetWidth;
+  feedbackText.style.animation = 'feedbackPop 1.2s ease forwards';
+  setTimeout(() => feedbackOverlay.classList.add('hidden'), 1200);
+}
+
+/* ========== CONFETTI ========== */
+
+const confettiCanvas = $('#confetti');
+const ctx = confettiCanvas.getContext('2d');
+let confettiParticles = [];
+let confettiAnimId = null;
+
+function resizeConfetti() {
+  confettiCanvas.width = window.innerWidth;
+  confettiCanvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+
+function spawnConfetti() {
+  const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#A78BFA','#F59E0B','#FF8E8E','#6FE0DB'];
+  for (let i = 0; i < 60; i++) {
+    confettiParticles.push({
+      x: Math.random() * confettiCanvas.width,
+      y: -10 - Math.random() * 40,
+      w: 6 + Math.random() * 10,
+      h: 4 + Math.random() * 8,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      vx: (Math.random() - 0.5) * 4,
+      vy: 2 + Math.random() * 5,
+      rotation: Math.random() * 360,
+      rotSpeed: (Math.random() - 0.5) * 10,
+      opacity: 1
+    });
+  }
+  if (!confettiAnimId) {
+    function animate() {
+      ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      let alive = false;
+      for (let i = confettiParticles.length - 1; i >= 0; i--) {
+        const p = confettiParticles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.08;
+        p.rotation += p.rotSpeed;
+        p.opacity -= 0.008;
+        if (p.opacity <= 0 || p.y > confettiCanvas.height + 20) {
+          confettiParticles.splice(i, 1);
+        } else {
+          alive = true;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation * Math.PI / 180);
+          ctx.globalAlpha = p.opacity;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+          ctx.restore();
+        }
+      }
+      if (alive) { confettiAnimId = requestAnimationFrame(animate); }
+      else { confettiAnimId = null; confettiParticles = []; ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); }
+    }
+    confettiAnimId = requestAnimationFrame(animate);
+  }
+}
+
+/* ========== VIEW MANAGEMENT ========== */
+
+function refreshHeader() {
+  childNameEl.textContent = appData.childName;
+  starCountEl.textContent = appData.stars;
+}
+
+function showView(view) {
+  viewHome.classList.add('hidden');
+  viewQuiz.classList.add('hidden');
+  viewResults.classList.add('hidden');
+  view.classList.remove('hidden');
+}
+
+/* ========== QUIZ ENGINE ========== */
+
+let quizState = null;
+
+function generateCountingQuestions() {
+  const emojis = ['🍎','🍊','🍋','🍇','🍓','🌸','⭐','🐱','🐶','🐰','🐟','🦋','🌺','🍭','🎈'];
+  const questions = [];
+  for (let i = 0; i < 10; i++) {
+    const count = 1 + Math.floor(Math.random() * 10);
+    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+    const correct = String(count);
+    const opts = new Set([correct]);
+    while (opts.size < 4) {
+      const cand = String(Math.max(1, Math.min(10, count + Math.floor(Math.random() * 5) - 2)));
+      opts.add(cand);
+    }
+    const shuffledOpts = shuffle([...opts]);
+    questions.push({ count, emoji, options: shuffledOpts, correct });
+  }
+  return questions;
+}
+
+function generateMathQuestions() {
+  const questions = [];
+  for (let i = 0; i < 10; i++) {
+    const isAdd = Math.random() > 0.5;
+    let a, b, answer, question;
+    if (isAdd) {
+      answer = 2 + Math.floor(Math.random() * 9);
+      a = 1 + Math.floor(Math.random() * (answer - 1));
+      b = answer - a;
+      question = a + ' + ' + b + ' = ?';
+    } else {
+      a = 2 + Math.floor(Math.random() * 9);
+      b = 1 + Math.floor(Math.random() * a);
+      answer = a - b;
+      question = a + ' - ' + b + ' = ?';
+    }
+    const correct = String(answer);
+    const opts = new Set([correct]);
+    while (opts.size < 4) {
+      const cand = String(Math.max(1, Math.min(10, answer + Math.floor(Math.random() * 5) - 2)));
+      opts.add(cand);
+    }
+    const shuffledOpts = shuffle([...opts]);
+    questions.push({ question, options: shuffledOpts, correct });
+  }
+  return questions;
+}
+
+function startQuiz(module) {
+  const titles = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数', math:'🧮 加减' };
+  quizTitle.textContent = titles[module];
+
+  let questions;
+  if (module === 'counting') {
+    questions = generateCountingQuestions();
+  } else if (module === 'math') {
+    questions = generateMathQuestions();
+  } else {
+    const bank = appData.quizBank[module];
+    const picked = shuffle(bank).slice(0, 10);
+    questions = picked.map(q => {
+      const shuffled = shuffle(q.options);
+      return { ...q, options: shuffled };
+    });
+  }
+
+  quizState = {
+    module,
+    questions,
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    firstTry: true,
+    wrongAttempts: 0
+  };
+
+  showView(viewQuiz);
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = quizState.questions[quizState.currentIndex];
+  const total = quizState.questions.length;
+  const idx = quizState.currentIndex;
+
+  progressFill.style.width = ((idx / total) * 100) + '%';
+  quizState.answered = false;
+  quizState.firstTry = true;
+  quizState.wrongAttempts = 0;
+
+  let qHTML = '';
+  const module = quizState.module;
+
+  if (module === 'characters') {
+    qHTML = '<div class="question-emoji">' + q.emoji + '</div>' +
+            '<div class="question-label">这个是什么？选一选</div>';
+  } else if (module === 'pinyin') {
+    qHTML = '<div class="question-text">' + q.pinyin + '</div>' +
+            '<div class="question-label">点击正确的汉字</div>';
+  } else if (module === 'counting') {
+    const emojis = Array(q.count).fill(q.emoji).join(' ');
+    qHTML = '<div class="question-emoji" style="font-size:48px; word-break:break-all; line-height:1.8;">' + emojis + '</div>' +
+            '<div class="question-label">一共有几个？数一数</div>';
+  } else if (module === 'math') {
+    qHTML = '<div class="question-text" style="font-size:40px;">' + q.question + '</div>' +
+            '<div class="question-label">算一算，选答案</div>';
+  }
+
+  questionArea.innerHTML = qHTML;
+
+  let optHTML = '';
+  q.options.forEach((opt, i) => {
+    optHTML += '<button class="option-btn" data-index="' + i + '">' + opt + '</button>';
+  });
+  optionsGrid.innerHTML = optHTML;
+
+  document.querySelectorAll('.option-btn').forEach(btn => {
+    btn.addEventListener('click', handleAnswer);
+  });
+}
+
+function handleAnswer(e) {
+  if (quizState.answered) return;
+  const btn = e.currentTarget;
+  const chosenIdx = parseInt(btn.dataset.index);
+  const q = quizState.questions[quizState.currentIndex];
+  const chosen = q.options[chosenIdx];
+  const isCorrect = (chosen === q.correct);
+
+  if (isCorrect) {
+    quizState.answered = true;
+    btn.classList.add('correct');
+    document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+    document.querySelectorAll('.option-btn').forEach(b => {
+      if (b.dataset.index == q.options.indexOf(q.correct)) {
+        b.classList.add('correct');
+      }
+    });
+
+    if (quizState.firstTry) {
+      quizState.score++;
+      appData.stars++;
+      saveData(appData);
+      refreshHeader();
+      spawnConfetti();
+      showFeedback('太棒了 ⭐');
+    } else {
+      showFeedback('答对了');
+    }
+
+    setTimeout(nextQuestion, 1500);
+  } else {
+    btn.classList.add('wrong');
+    quizState.firstTry = false;
+    quizState.wrongAttempts++;
+    if (quizState.wrongAttempts >= 3) {
+      quizState.answered = true;
+      document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+      document.querySelectorAll('.option-btn').forEach(b => {
+        if (b.dataset.index == q.options.indexOf(q.correct)) {
+          b.classList.add('correct');
+        }
+      });
+      showFeedback('答案是 ' + q.correct);
+      setTimeout(nextQuestion, 2000);
+    } else {
+      setTimeout(() => btn.classList.remove('wrong'), 600);
+      showFeedback('再试一次');
+    }
+  }
+}
+
+function nextQuestion() {
+  quizState.currentIndex++;
+  if (quizState.currentIndex >= quizState.questions.length) {
+    showResults();
+  } else {
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  const score = quizState.score;
+  const total = quizState.questions.length;
+  const pct = score / total;
+
+  let emoji, message;
+  if (pct >= 0.9) { emoji = '🏆'; message = '太厉害了！'; }
+  else if (pct >= 0.7) { emoji = '🎉'; message = '非常棒！'; }
+  else if (pct >= 0.5) { emoji = '👍'; message = '不错哦！'; }
+  else { emoji = '💪'; message = '继续加油！'; }
+
+  resultsEmoji.textContent = emoji;
+  resultsScore.innerHTML = message + '<br><span style="font-size:18px;color:#888;">本轮得分 ' + score + ' / ' + total + '</span>';
+  resultsStars.textContent = '共获得 ' + appData.stars + ' 颗星星 ⭐';
+
+  if (pct >= 0.7) spawnConfetti();
+  showView(viewResults);
+
+  saveData(appData);
+}
+
+/* ========== ADMIN PANEL ========== */
+
+let adminModule = 'characters';
+
+function renderAdmin() {
+  const bank = appData.quizBank[adminModule];
+  const moduleNames = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数(自动)', math:'🧮 加减(自动)' };
+  const isDynamic = (adminModule === 'counting' || adminModule === 'math');
+
+  let tabsHTML = '';
+  for (const [key, name] of Object.entries(moduleNames)) {
+    tabsHTML += '<button class="admin-tab' + (key === adminModule ? ' active' : '') + '" data-module="' + key + '">' + name + '</button>';
+  }
+
+  let listHTML = '';
+  if (isDynamic) {
+    listHTML = '<div style="padding:20px;text-align:center;color:#888;font-size:16px;">此模块的题目每次会自动生成，无需手动管理</div>';
+  } else {
+    listHTML = '<div class="question-list">';
+    bank.forEach((q, idx) => {
+      const preview = adminModule === 'characters'
+        ? '<span class="q-emoji">' + q.emoji + '</span> 正确答案：' + q.correct
+        : '<strong>' + q.pinyin + '</strong> 正确答案：' + q.correct;
+      listHTML += '<div class="question-item">' +
+        '<span class="q-preview">' + preview + '</span>' +
+        '<button class="edit-btn" data-idx="' + idx + '">✏️</button>' +
+        '<button class="del-btn" data-idx="' + idx + '">🗑️</button>' +
+        '</div>';
+    });
+    listHTML += '</div>';
+    listHTML += '<button class="btn btn-primary" id="addQuestionBtn" style="margin-top:12px;width:100%;">+ 添加题目</button>';
+    listHTML += '<div class="admin-form hidden" id="addForm"></div>';
+  }
+
+  adminPanel.innerHTML =
+    '<button class="close-admin" id="closeAdmin">✕</button>' +
+    '<h2>家长管理</h2>' +
+    '<div class="admin-section">' +
+      '<label>孩子名字</label>' +
+      '<input type="text" id="adminNameInput" value="' + appData.childName + '" maxlength="10">' +
+    '</div>' +
+    '<div class="admin-section">' +
+      '<label>今日星星数：' + appData.stars + ' ⭐</label>' +
+      '<button class="btn btn-outline" id="resetStars" style="margin-top:6px;">重置星星数</button>' +
+    '</div>' +
+    '<div class="admin-section">' +
+      '<label>题库管理</label>' +
+      '<div class="admin-tabs">' + tabsHTML + '</div>' +
+      listHTML +
+    '</div>';
+
+  // Events
+  $('#closeAdmin').addEventListener('click', closeAdmin);
+  $('#adminNameInput').addEventListener('input', function() {
+    appData.childName = this.value || '宝宝';
+    saveData(appData);
+    refreshHeader();
+  });
+  $('#resetStars').addEventListener('click', function() {
+    if (confirm('确定要重置星星数为 0 吗？')) {
+      appData.stars = 0;
+      saveData(appData);
+      refreshHeader();
+      renderAdmin();
+    }
+  });
+
+  document.querySelectorAll('.admin-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      adminModule = this.dataset.module;
+      renderAdmin();
+    });
+  });
+
+  document.querySelectorAll('.edit-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.idx);
+      showEditForm(idx);
+    });
+  });
+
+  document.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const idx = parseInt(this.dataset.idx);
+      if (confirm('确定删除这道题吗？')) {
+        appData.quizBank[adminModule].splice(idx, 1);
+        saveData(appData);
+        renderAdmin();
+      }
+    });
+  });
+
+  if (!isDynamic) {
+    const addBtn = $('#addQuestionBtn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => showAddForm());
+    }
+  }
+}
+
+function showAddForm() {
+  const form = $('#addForm');
+  if (!form) return;
+  const isChar = adminModule === 'characters';
+
+  form.classList.remove('hidden');
+  form.innerHTML =
+    '<h3 style="margin-bottom:8px;">添加新题目</h3>' +
+    (isChar
+      ? '<input type="text" id="newEmoji" placeholder="Emoji 表情，如 🍎" maxlength="10">'
+      : '<input type="text" id="newPinyin" placeholder="拼音，如 mā" maxlength="20">') +
+    '<input type="text" id="newOpt0" placeholder="选项 1（正确答案）">' +
+    '<input type="text" id="newOpt1" placeholder="选项 2">' +
+    '<input type="text" id="newOpt2" placeholder="选项 3">' +
+    '<input type="text" id="newOpt3" placeholder="选项 4">' +
+    '<div style="display:flex;gap:8px;margin-top:8px;">' +
+      '<button class="btn btn-primary" id="saveNew">保存</button>' +
+      '<button class="btn btn-outline" id="cancelNew">取消</button>' +
+    '</div>';
+
+  $('#saveNew').addEventListener('click', () => {
+    const opts = [
+      $('#newOpt0').value.trim(),
+      $('#newOpt1').value.trim(),
+      $('#newOpt2').value.trim(),
+      $('#newOpt3').value.trim()
+    ];
+    if (!opts[0]) { alert('请至少填写选项1（正确答案）'); return; }
+    const filled = opts.filter(o => o);
+    if (filled.length < 2) { alert('请至少填写2个选项'); return; }
+
+    const newQ = { options: filled, correct: opts[0] };
+    if (adminModule === 'characters') {
+      newQ.emoji = $('#newEmoji').value.trim() || '❓';
+    } else {
+      newQ.pinyin = $('#newPinyin').value.trim() || '?';
+    }
+    appData.quizBank[adminModule].push(newQ);
+    saveData(appData);
+    renderAdmin();
+  });
+
+  $('#cancelNew').addEventListener('click', () => renderAdmin());
+}
+
+function showEditForm(idx) {
+  const form = $('#addForm');
+  if (!form) return;
+  const q = appData.quizBank[adminModule][idx];
+  const isChar = adminModule === 'characters';
+
+  form.classList.remove('hidden');
+  form.innerHTML =
+    '<h3 style="margin-bottom:8px;">编辑题目</h3>' +
+    (isChar
+      ? '<input type="text" id="editEmoji" value="' + q.emoji + '" placeholder="Emoji" maxlength="10">'
+      : '<input type="text" id="editPinyin" value="' + q.pinyin + '" placeholder="拼音" maxlength="20">') +
+    '<input type="text" id="editOpt0" value="' + q.options[0] + '" placeholder="选项 1（正确答案）">' +
+    '<input type="text" id="editOpt1" value="' + (q.options[1] || '') + '" placeholder="选项 2">' +
+    '<input type="text" id="editOpt2" value="' + (q.options[2] || '') + '" placeholder="选项 3">' +
+    '<input type="text" id="editOpt3" value="' + (q.options[3] || '') + '" placeholder="选项 4">' +
+    '<div style="display:flex;gap:8px;margin-top:8px;">' +
+      '<button class="btn btn-primary" id="saveEdit">保存</button>' +
+      '<button class="btn btn-outline" id="cancelEdit">取消</button>' +
+    '</div>';
+
+  $('#saveEdit').addEventListener('click', () => {
+    const opts = [
+      $('#editOpt0').value.trim(),
+      $('#editOpt1').value.trim(),
+      $('#editOpt2').value.trim(),
+      $('#editOpt3').value.trim()
+    ];
+    if (!opts[0]) { alert('请至少填写选项1（正确答案）'); return; }
+    const filled = opts.filter(o => o);
+    if (filled.length < 2) { alert('请至少填写2个选项'); return; }
+
+    q.options = filled;
+    q.correct = opts[0];
+    if (adminModule === 'characters') {
+      q.emoji = $('#editEmoji').value.trim() || '❓';
+      delete q.pinyin;
+    } else {
+      q.pinyin = $('#editPinyin').value.trim() || '?';
+      delete q.emoji;
+    }
+    saveData(appData);
+    renderAdmin();
+  });
+
+  $('#cancelEdit').addEventListener('click', () => renderAdmin());
+}
+
+function openAdmin() {
+  adminModule = 'characters';
+  renderAdmin();
+  adminOverlay.classList.remove('hidden');
+}
+
+function closeAdmin() {
+  adminOverlay.classList.add('hidden');
+}
+
+/* ========== NAVIGATION EVENTS ========== */
+
+document.querySelectorAll('.module-card').forEach(card => {
+  card.addEventListener('click', function() {
+    startQuiz(this.dataset.module);
+  });
+});
+
+$('#quizBack').addEventListener('click', () => showView(viewHome));
+$('#resultsBack').addEventListener('click', () => showView(viewHome));
+$('#adminBtn').addEventListener('click', openAdmin);
+adminOverlay.addEventListener('click', function(e) {
+  if (e.target === adminOverlay) closeAdmin();
+});
+
+/* ========== INIT ========== */
+
+refreshHeader();
+showView(viewHome);
+
+})();
+</script>
+</body>
+</html>
