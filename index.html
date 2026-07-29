@@ -432,8 +432,9 @@ function defaultData() {
   return {
     childName: '宝宝',
     stars: 0,
-    quizBank: {
-      characters: [
+      soundEnabled: true,
+      quizBank: {
+        characters: [
         {emoji:'🍎',options:['苹果','香蕉','西瓜','葡萄'],correct:'苹果'},
         {emoji:'🐱',options:['狗','兔子','猫','鱼'],correct:'猫'},
         {emoji:'🌙',options:['太阳','月亮','星星','云朵'],correct:'月亮'},
@@ -489,6 +490,7 @@ function loadData() {
     if (!parsed.quizBank) parsed.quizBank = defaultData().quizBank;
     if (!parsed.childName) parsed.childName = '宝宝';
     if (typeof parsed.stars !== 'number') parsed.stars = 0;
+    if (typeof parsed.soundEnabled !== 'boolean') parsed.soundEnabled = true;
     if (!parsed.quizBank.characters) parsed.quizBank.characters = defaultData().quizBank.characters;
     if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
     return parsed;
@@ -540,6 +542,49 @@ function showFeedback(text) {
   void feedbackText.offsetWidth;
   feedbackText.style.animation = 'feedbackPop 1.2s ease forwards';
   setTimeout(() => feedbackOverlay.classList.add('hidden'), 1200);
+}
+
+/* ========== AUDIO ========== */
+
+let audioCtx = null;
+
+function initAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+}
+
+function playTone(freq, type, duration, startTime, vol) {
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start(startTime);
+  gain.gain.setValueAtTime(vol || 0.25, startTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+  osc.stop(startTime + duration);
+}
+
+function playCorrectSound() {
+  if (!appData.soundEnabled) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+  playTone(523.25, 'sine', 0.18, now, 0.25);      // C5
+  playTone(659.25, 'sine', 0.18, now + 0.12, 0.25); // E5
+  playTone(783.99, 'sine', 0.30, now + 0.24, 0.30); // G5
+}
+
+function playWrongSound() {
+  if (!appData.soundEnabled) return;
+  initAudio();
+  const now = audioCtx.currentTime;
+  playTone(220.00, 'triangle', 0.25, now, 0.25);      // A3
+  playTone(196.00, 'triangle', 0.35, now + 0.25, 0.25); // G3
 }
 
 /* ========== CONFETTI ========== */
@@ -762,6 +807,7 @@ function handleAnswer(btn) {
   const isCorrect = (chosen === q.correct);
 
   if (isCorrect) {
+    playCorrectSound();
     quizState.answered = true;
     btn.classList.add('correct');
     document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
@@ -785,6 +831,7 @@ function handleAnswer(btn) {
 
     setTimeout(nextQuestion, 1500);
   } else {
+    playWrongSound();
     btn.classList.add('wrong');
     quizState.firstTry = false;
     quizState.wrongAttempts++;
@@ -877,6 +924,13 @@ function renderAdmin() {
       '<input type="text" id="adminNameInput" value="' + appData.childName + '" maxlength="10">' +
     '</div>' +
     '<div class="admin-section">' +
+      '<label>声音提示</label>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:16px;">' +
+        '<input type="checkbox" id="soundToggle" ' + (appData.soundEnabled ? 'checked' : '') + ' style="width:20px;height:20px;cursor:pointer;">' +
+        '<span>答对/答错时播放音效</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="admin-section">' +
       '<label>今日星星数：' + appData.stars + ' ⭐</label>' +
       '<button class="btn btn-outline" id="resetStars" style="margin-top:6px;">重置星星数</button>' +
     '</div>' +
@@ -892,6 +946,10 @@ function renderAdmin() {
     appData.childName = this.value || '宝宝';
     saveData(appData);
     refreshHeader();
+  });
+  $('#soundToggle').addEventListener('change', function() {
+    appData.soundEnabled = this.checked;
+    saveData(appData);
   });
   $('#resetStars').addEventListener('click', function() {
     if (confirm('确定要重置星星数为 0 吗？')) {
