@@ -152,6 +152,14 @@ header .star-badge .star-icon {
   display: flex; align-items: center; justify-content: center;
 }
 .quiz-title { font-size: 22px; font-weight: 600; }
+.replay-btn {
+  margin-left: auto;
+  background: var(--white); border: none;
+  width: 44px; height: 44px; border-radius: 50%;
+  font-size: 22px; cursor: pointer;
+  box-shadow: var(--shadow);
+  display: flex; align-items: center; justify-content: center;
+}
 
 .progress-wrap {
   background: #eee; border-radius: 50px; height: 12px; overflow: hidden;
@@ -473,6 +481,7 @@ header .star-badge .star-icon {
     <div class="quiz-header">
       <button class="back-btn" id="quizBack">←</button>
       <span class="quiz-title" id="quizTitle"></span>
+      <button class="replay-btn" id="replayBtn" title="重新读题">🔊</button>
     </div>
     <div class="progress-wrap">
       <div class="progress-fill" id="progressFill" style="width:0%"></div>
@@ -508,6 +517,7 @@ function defaultData() {
     childName: '宝宝',
     stars: 0,
       soundEnabled: true,
+      ttsEnabled: true,
       quizBank: {
         characters: [
         {emoji:'🍎',options:['苹果','香蕉','西瓜','葡萄'],correct:'苹果'},
@@ -566,6 +576,7 @@ function loadData() {
     if (!parsed.childName) parsed.childName = '宝宝';
     if (typeof parsed.stars !== 'number') parsed.stars = 0;
     if (typeof parsed.soundEnabled !== 'boolean') parsed.soundEnabled = true;
+    if (typeof parsed.ttsEnabled !== 'boolean') parsed.ttsEnabled = true;
     if (!parsed.quizBank.characters) parsed.quizBank.characters = defaultData().quizBank.characters;
     if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
     return parsed;
@@ -596,6 +607,7 @@ const progressFill = $('#progressFill');
 const questionArea = $('#questionArea');
 const optionsGrid = $('#optionsGrid');
 const quizTitle = $('#quizTitle');
+const replayBtn = $('#replayBtn');
 const resultsEmoji = $('#resultsEmoji');
 const resultsScore = $('#resultsScore');
 const resultsStars = $('#resultsStars');
@@ -661,6 +673,34 @@ function playWrongSound() {
   playTone(220.00, 'triangle', 0.25, now, 0.25);      // A3
   playTone(196.00, 'triangle', 0.35, now + 0.25, 0.25); // G3
 }
+
+/* ========== TTS 语音朗读 ========== */
+let currentSpeakText = '';
+const ttsSupported = ('speechSynthesis' in window);
+let ttsVoices = [];
+function loadTtsVoices() {
+  if (!ttsSupported) return;
+  try { ttsVoices = window.speechSynthesis.getVoices() || []; } catch(e) { ttsVoices = []; }
+}
+if (ttsSupported) {
+  loadTtsVoices();
+  try { window.speechSynthesis.onvoiceschanged = loadTtsVoices; } catch(e) {}
+}
+function speak(text) {
+  if (!appData.ttsEnabled) return;
+  if (!ttsSupported || !text) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = 'zh-CN';
+    u.rate = 0.9;
+    u.pitch = 1.1;
+    const zh = ttsVoices.find(function(v){ return /^zh/i.test(v.lang || ''); });
+    if (zh) u.voice = zh;
+    window.speechSynthesis.speak(u);
+  } catch(e) {}
+}
+const EMOJI_NAMES = { '🍎':'苹果', '🍊':'橘子', '🍇':'葡萄', '🍓':'草莓', '🍌':'香蕉', '🍉':'西瓜' };
 
 /* ========== CONFETTI ========== */
 
@@ -1009,6 +1049,8 @@ let memoryState = null;
 function startMemoryGame() {
   stopConfetti();
   quizTitle.textContent = '🧠 记忆配对';
+  if (replayBtn) replayBtn.style.display = 'none';
+  currentSpeakText = '';
   progressFill.style.width = '0%';
   memoryState = null;
 
@@ -1061,6 +1103,8 @@ function handleMemoryCardClick(cardEl) {
 
   card.flipped = true;
   memoryState.flipped.push(card);
+  const nm = EMOJI_NAMES[card.emoji];
+  if (nm) speak(nm);
   renderMemoryGrid();
 
   if (memoryState.flipped.length === 2) {
@@ -1177,6 +1221,17 @@ function renderQuestion() {
     optHTML += '<button class="option-btn" data-index="' + i + '">' + opt + '</button>';
   });
   optionsGrid.innerHTML = optHTML;
+
+  let speakText = '';
+  if (module === 'characters') speakText = '这是什么？点下面的字';
+  else if (module === 'pinyin') speakText = '请选出读音';
+  else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
+  else if (module === 'math') speakText = '算一算，' + q.question.replace('=', '等于');
+  else if (module === 'pattern') speakText = '接下来应该是什么？';
+  else if (module === 'classify') speakText = '哪个不是' + q.mainCategory + '？';
+  currentSpeakText = speakText;
+  if (replayBtn) replayBtn.style.display = '';
+  speak(speakText);
 }
 
 function handleAnswer(btn) {
@@ -1311,6 +1366,13 @@ function renderAdmin() {
       '</div>' +
     '</div>' +
     '<div class="admin-section">' +
+      '<label>语音朗读</label>' +
+      '<div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:16px;">' +
+        '<input type="checkbox" id="ttsToggle" ' + (appData.ttsEnabled ? 'checked' : '') + ' style="width:20px;height:20px;cursor:pointer;">' +
+        '<span>题目和选项自动读出来</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="admin-section">' +
       '<label>今日星星数：' + appData.stars + ' ⭐</label>' +
       '<button class="btn btn-outline" id="resetStars" style="margin-top:6px;">重置星星数</button>' +
     '</div>' +
@@ -1329,6 +1391,10 @@ function renderAdmin() {
   });
   $('#soundToggle').addEventListener('change', function() {
     appData.soundEnabled = this.checked;
+    saveData(appData);
+  });
+  $('#ttsToggle').addEventListener('change', function() {
+    appData.ttsEnabled = this.checked;
     saveData(appData);
   });
   $('#resetStars').addEventListener('click', function() {
@@ -1492,6 +1558,8 @@ optionsGrid.addEventListener('click', function(e) {
     startMathQuiz(parseInt(btn.dataset.max));
     return;
   }
+  const optTxt = btn.textContent.trim();
+  if (/[\u4e00-\u9fa50-9]/.test(optTxt)) speak(optTxt);
   handleAnswer(btn);
 });
 
@@ -1507,6 +1575,9 @@ $('#quizBack').addEventListener('click', () => {
   memoryState = null;
   showView(viewHome);
 });
+$('#replayBtn').addEventListener('click', function() {
+  if (currentSpeakText) speak(currentSpeakText);
+});
 $('#resultsBack').addEventListener('click', () => {
   stopConfetti();
   quizState = null;
@@ -1520,6 +1591,7 @@ adminOverlay.addEventListener('click', function(e) {
 
 /* ========== INIT ========== */
 
+if (!ttsSupported && replayBtn) replayBtn.style.display = 'none';
 refreshHeader();
 showView(viewHome);
 
