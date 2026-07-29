@@ -99,6 +99,9 @@ header .star-badge .star-icon {
   gap: 16px;
   align-content: start;
 }
+.home-grid .module-card:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
 
 .module-card {
   background: var(--white);
@@ -125,6 +128,12 @@ header .star-badge .star-icon {
 .card-counting .label { color: #A78BFA; }
 .card-math { border-color: #F59E0B; }
 .card-math .label { color: #F59E0B; }
+.card-pattern { border-color: #34D399; }
+.card-pattern .label { color: #34D399; }
+.card-classify { border-color: #F472B6; }
+.card-classify .label { color: #F472B6; }
+.card-memory { border-color: #60A5FA; }
+.card-memory .label { color: #60A5FA; }
 
 /* ---- Quiz Page ---- */
 .quiz-container {
@@ -207,7 +216,58 @@ header .star-badge .star-icon {
 }
 .option-btn:disabled { pointer-events: none; opacity: 0.7; }
 
-/* ---- Animations ---- */
+/* ---- Memory Game ---- */
+.memory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 8px;
+}
+.memory-card {
+  aspect-ratio: 1;
+  background: linear-gradient(135deg, var(--teal-light), var(--teal));
+  border: none;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  font-size: 36px;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 90px;
+}
+.memory-card:active { transform: scale(0.95); }
+.memory-card.flipped {
+  background: var(--white);
+  border: 3px solid var(--teal);
+}
+.memory-card.matched {
+  background: var(--teal-pale);
+  border-color: var(--teal);
+  opacity: 0.8;
+  cursor: default;
+}
+.memory-card .card-face {
+  display: none;
+}
+.memory-card.flipped .card-face,
+.memory-card.matched .card-face {
+  display: block;
+}
+.memory-card .card-back {
+  display: block;
+  font-size: 28px;
+  color: var(--white);
+}
+.memory-card.flipped .card-back,
+.memory-card.matched .card-back {
+  display: none;
+}
+.memory-info {
+  text-align: center;
+  font-size: 18px;
+  color: var(--text-light);
+  margin-bottom: 8px;
+}
 @keyframes popIn {
   0% { transform: scale(0.8); opacity: 0.5; }
   60% { transform: scale(1.08); }
@@ -386,10 +446,20 @@ header .star-badge .star-icon {
       <div class="label">数数</div>
       <div class="desc">数一数有多少</div>
     </div>
-    <div class="module-card card-math" data-module="math">
-      <div class="emoji">🧮</div>
-      <div class="label">加减</div>
-      <div class="desc">10以内加减法</div>
+    <div class="module-card card-memory" data-module="memory">
+      <div class="emoji">🧠</div>
+      <div class="label">记忆配对</div>
+      <div class="desc">翻牌找相同</div>
+    </div>
+    <div class="module-card card-pattern" data-module="pattern">
+      <div class="emoji">🧩</div>
+      <div class="label">找规律</div>
+      <div class="desc">发现排列规律</div>
+    </div>
+    <div class="module-card card-classify" data-module="classify">
+      <div class="emoji">🗂️</div>
+      <div class="label">分类</div>
+      <div class="desc">找出不同类</div>
     </div>
   </div>
 
@@ -774,8 +844,77 @@ function generateMathQuestions(maxNum) {
   return questions;
 }
 
+function generatePatternQuestions() {
+  const allEmojis = ['🍎','🍊','🍋','🍇','🍓','🍉','🍌','🍒','🥝','🍑','🥕','🌽','🍄','🌰','🍪'];
+  const patterns = ['ABAB', 'AAB', 'ABB', 'ABC'];
+  const questions = [];
+  for (let i = 0; i < 10; i++) {
+    const type = patterns[Math.floor(Math.random() * patterns.length)];
+    const pool = shuffle([...allEmojis]).slice(0, 3);
+    const A = pool[0], B = pool[1], C = pool[2];
+    let sequence = [];
+    if (type === 'ABAB') {
+      sequence = [A, B, A, B, A, null];
+    } else if (type === 'AAB') {
+      sequence = [A, A, B, A, A, null];
+    } else if (type === 'ABB') {
+      sequence = [A, B, B, A, B, null];
+    } else if (type === 'ABC') {
+      sequence = [A, B, C, A, B, null];
+    }
+    const correct = sequence[sequence.length - 1] || (type === 'ABC' ? C : (type === 'ABAB' || type === 'ABB' ? B : B));
+    const shownSequence = sequence.slice(0, -1);
+    const opts = new Set([correct]);
+    let safety = 0;
+    while (opts.size < 4 && safety < 100) {
+      safety++;
+      opts.add(allEmojis[Math.floor(Math.random() * allEmojis.length)]);
+    }
+    questions.push({
+      type: 'pattern',
+      sequence: shownSequence,
+      patternType: type,
+      options: shuffle([...opts]),
+      correct
+    });
+  }
+  return questions;
+}
+
+function generateClassificationQuestions() {
+  const categories = [
+    { name: '水果', items: ['🍎','🍊','🍇','🍓','🍌','🍉','🍒','🍑'] },
+    { name: '动物', items: ['🐱','🐶','🐰','🐼','🐯','🦁','🐷','🐸'] },
+    { name: '交通工具', items: ['🚗','🚌','🚕','🚓','🚑','🚒','🚜','🚲'] },
+    { name: '食物', items: ['🍚','🍜','🍔','🍕','🍰','🍩','🍪','🍫'] },
+    { name: '文具', items: ['✏️','🖍️','📏','✂️','🎒','📐','📝','📘'] },
+    { name: '衣服', items: ['👕','👖','👗','👔','🧦','🧥','🧢','👟'] },
+    { name: '运动', items: ['⚽','🏀','🏐','⚾','🎾','🏓','🏸','🏒'] },
+    { name: '家具', items: ['🛏️','🪑','🚪','🪟','🛋️','🚽','🪞','🧺'] }
+  ];
+  const questions = [];
+  for (let i = 0; i < 10; i++) {
+    const mainIdx = Math.floor(Math.random() * categories.length);
+    let oddIdx = Math.floor(Math.random() * categories.length);
+    while (oddIdx === mainIdx) oddIdx = Math.floor(Math.random() * categories.length);
+    const mainCat = categories[mainIdx];
+    const oddCat = categories[oddIdx];
+    const mainItems = shuffle([...mainCat.items]).slice(0, 3);
+    const oddItem = oddCat.items[Math.floor(Math.random() * oddCat.items.length)];
+    const allItems = shuffle([...mainItems, oddItem]);
+    questions.push({
+      type: 'classify',
+      items: allItems,
+      mainCategory: mainCat.name,
+      options: allItems,
+      correct: oddItem
+    });
+  }
+  return questions;
+}
+
 function startQuiz(module) {
-  if (!module || !['characters','pinyin','counting','math'].includes(module)) {
+  if (!module || !['characters','pinyin','counting','math','pattern','classify','memory'].includes(module)) {
     console.error('Invalid module:', module);
     return;
   }
@@ -786,12 +925,27 @@ function startQuiz(module) {
     return;
   }
 
-  const titles = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数' };
+  if (module === 'memory') {
+    startMemoryGame();
+    return;
+  }
+
+  const titles = {
+    characters:'📖 识字',
+    pinyin:'🔤 拼音',
+    counting:'🔢 数数',
+    pattern:'🧩 找规律',
+    classify:'🗂️ 分类'
+  };
   quizTitle.textContent = titles[module];
 
   let questions;
   if (module === 'counting') {
     questions = generateCountingQuestions();
+  } else if (module === 'pattern') {
+    questions = generatePatternQuestions();
+  } else if (module === 'classify') {
+    questions = generateClassificationQuestions();
   } else {
     const bank = appData.quizBank[module];
     const picked = shuffle(bank).slice(0, 10);
@@ -844,6 +998,114 @@ function startMathQuiz(maxNum) {
   renderQuestion();
 }
 
+/* ========== MEMORY GAME ========== */
+let memoryState = null;
+
+function startMemoryGame() {
+  stopConfetti();
+  quizTitle.textContent = '🧠 记忆配对';
+  progressFill.style.width = '0%';
+  memoryState = null;
+
+  const pairs = ['🍎','🍊','🍇','🍓','🍌','🍉'];
+  const cards = shuffle([...pairs, ...pairs]).map((emoji, idx) => ({
+    id: idx,
+    emoji,
+    flipped: false,
+    matched: false
+  }));
+
+  memoryState = {
+    cards,
+    flipped: [],
+    locked: false,
+    matchedPairs: 0,
+    totalPairs: pairs.length,
+    attempts: 0
+  };
+
+  quizState = null;
+  showView(viewQuiz);
+  renderMemoryGrid();
+}
+
+function renderMemoryGrid() {
+  if (!memoryState) return;
+  const infoHTML = '<div class="memory-info">翻开两张相同的卡片就配对成功！</div>';
+  let gridHTML = '<div class="memory-grid">';
+  memoryState.cards.forEach(card => {
+    const classes = ['memory-card'];
+    if (card.flipped) classes.push('flipped');
+    if (card.matched) classes.push('matched');
+    gridHTML +=
+      '<button class="' + classes.join(' ') + '" data-memory-id="' + card.id + '">' +
+        '<span class="card-back">?</span>' +
+        '<span class="card-face">' + card.emoji + '</span>' +
+      '</button>';
+  });
+  gridHTML += '</div>';
+  questionArea.innerHTML = infoHTML + gridHTML;
+  optionsGrid.innerHTML = '';
+}
+
+function handleMemoryCardClick(cardEl) {
+  if (!memoryState || memoryState.locked) return;
+  const id = parseInt(cardEl.dataset.memoryId);
+  const card = memoryState.cards.find(c => c.id === id);
+  if (!card || card.flipped || card.matched) return;
+
+  card.flipped = true;
+  memoryState.flipped.push(card);
+  renderMemoryGrid();
+
+  if (memoryState.flipped.length === 2) {
+    memoryState.attempts++;
+    const [c1, c2] = memoryState.flipped;
+    if (c1.emoji === c2.emoji) {
+      c1.matched = true;
+      c2.matched = true;
+      memoryState.matchedPairs++;
+      memoryState.flipped = [];
+      playCorrectSound();
+      if (memoryState.matchedPairs >= memoryState.totalPairs) {
+        setTimeout(finishMemoryGame, 600);
+      } else {
+        renderMemoryGrid();
+      }
+    } else {
+      memoryState.locked = true;
+      setTimeout(() => {
+        c1.flipped = false;
+        c2.flipped = false;
+        memoryState.flipped = [];
+        memoryState.locked = false;
+        renderMemoryGrid();
+      }, 1000);
+    }
+  }
+}
+
+function finishMemoryGame() {
+  const total = memoryState.totalPairs;
+  /* 完成记忆游戏直接奖励 3 颗星 */
+  const reward = 3;
+  appData.stars += reward;
+  saveData(appData);
+  refreshHeader();
+  spawnConfetti();
+  quizState = {
+    module: 'memory',
+    questions: new Array(total).fill(null),
+    currentIndex: 0,
+    score: total,
+    answered: false,
+    firstTry: true,
+    wrongAttempts: 0
+  };
+  memoryState = null;
+  showResults();
+}
+
 function renderQuestion() {
   const q = quizState.questions[quizState.currentIndex];
   const total = quizState.questions.length;
@@ -888,6 +1150,19 @@ function renderQuestion() {
   } else if (module === 'math') {
     qHTML = '<div class="question-text" style="font-size:40px;">' + q.question + '</div>' +
             '<div class="question-label">算一算，选答案</div>';
+  } else if (module === 'pattern') {
+    const seqHTML = q.sequence.map(item =>
+      '<span style="display:inline-block; margin:0 6px;">' + item + '</span>'
+    ).join('') +
+    '<span style="display:inline-block; margin:0 6px; color:var(--coral); font-weight:bold;">?</span>';
+    qHTML = '<div class="question-emoji" style="font-size:42px;">' + seqHTML + '</div>' +
+            '<div class="question-label">下一个是什么？</div>';
+  } else if (module === 'classify') {
+    const itemsHTML = q.items.map(item =>
+      '<span style="display:inline-block; margin:0 8px;">' + item + '</span>'
+    ).join('');
+    qHTML = '<div class="question-emoji" style="font-size:46px;">' + itemsHTML + '</div>' +
+            '<div class="question-label">哪个不是「' + q.mainCategory + '」？</div>';
   }
 
   questionArea.innerHTML = qHTML;
@@ -1215,14 +1490,22 @@ optionsGrid.addEventListener('click', function(e) {
   handleAnswer(btn);
 });
 
+questionArea.addEventListener('click', function(e) {
+  const card = e.target.closest('.memory-card');
+  if (!card) return;
+  handleMemoryCardClick(card);
+});
+
 $('#quizBack').addEventListener('click', () => {
   stopConfetti();
   quizState = null;
+  memoryState = null;
   showView(viewHome);
 });
 $('#resultsBack').addEventListener('click', () => {
   stopConfetti();
   quizState = null;
+  memoryState = null;
   showView(viewHome);
 });
 $('#adminBtn').addEventListener('click', openAdmin);
