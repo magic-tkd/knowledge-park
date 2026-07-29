@@ -638,8 +638,10 @@ function generateCountingQuestions() {
     const emoji = emojis[Math.floor(Math.random() * emojis.length)];
     const correct = String(count);
     const opts = new Set([correct]);
-    while (opts.size < 4) {
-      const cand = String(Math.max(1, Math.min(10, count + Math.floor(Math.random() * 5) - 2)));
+    let safety = 0;
+    while (opts.size < 4 && safety < 100) {
+      safety++;
+      const cand = String(1 + Math.floor(Math.random() * 10));
       opts.add(cand);
     }
     const shuffledOpts = shuffle([...opts]);
@@ -666,8 +668,10 @@ function generateMathQuestions() {
     }
     const correct = String(answer);
     const opts = new Set([correct]);
-    while (opts.size < 4) {
-      const cand = String(Math.max(1, Math.min(10, answer + Math.floor(Math.random() * 5) - 2)));
+    let safety = 0;
+    while (opts.size < 4 && safety < 100) {
+      safety++;
+      const cand = String(Math.floor(Math.random() * 11));
       opts.add(cand);
     }
     const shuffledOpts = shuffle([...opts]);
