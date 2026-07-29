@@ -99,6 +99,18 @@ header .star-badge .star-icon {
   gap: 16px;
   align-content: start;
 }
+
+.tts-tip {
+  margin: 14px 4px 0;
+  padding: 10px 14px;
+  background: #fff4e0;
+  border: 1px solid #ffd591;
+  border-radius: 14px;
+  color: #ad6800;
+  font-size: 15px;
+  text-align: center;
+  line-height: 1.5;
+}
 .home-grid .module-card:last-child:nth-child(odd) {
   grid-column: 1 / -1;
 }
@@ -476,6 +488,8 @@ header .star-badge .star-icon {
     </div>
   </div>
 
+  <div id="ttsTip" class="tts-tip" hidden>🔇 当前浏览器不支持语音朗读，请改用 Safari 或 Chrome 打开</div>
+
   <!-- Quiz -->
   <div id="viewQuiz" class="quiz-container hidden">
     <div class="quiz-header">
@@ -678,6 +692,7 @@ function playWrongSound() {
 let currentSpeakText = '';
 const ttsSupported = ('speechSynthesis' in window);
 let ttsVoices = [];
+let ttsReady = false;   // iOS 需要首次在用户手势内激活语音引擎
 function loadTtsVoices() {
   if (!ttsSupported) return;
   try { ttsVoices = window.speechSynthesis.getVoices() || []; } catch(e) { ttsVoices = []; }
@@ -686,18 +701,39 @@ if (ttsSupported) {
   loadTtsVoices();
   try { window.speechSynthesis.onvoiceschanged = loadTtsVoices; } catch(e) {}
 }
-function speak(text) {
-  if (!appData.ttsEnabled) return;
-  if (!ttsSupported || !text) return;
+// 预热：在用户手势内先播一个静音空句，解锁 iOS 语音引擎
+function warmUpTts() {
+  if (!ttsSupported || ttsReady) return;
   try {
-    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance('');
+    u.volume = 0;
+    window.speechSynthesis.speak(u);
+    ttsReady = true;
+  } catch(e) {}
+}
+// 首次任意交互即解锁（点击模块卡片时也会触发，确保在读题前激活）
+if (ttsSupported) {
+  ['touchstart', 'click'].forEach(function(ev) {
+    window.addEventListener(ev, warmUpTts, { once: true, passive: true });
+  });
+}
+function speak(text) {
+  if (!appData.ttsEnabled || !ttsSupported || !text) return;
+  try {
+    if (!ttsVoices.length) loadTtsVoices();   // 刷新 voices（iOS 异步加载）
     const u = new SpeechSynthesisUtterance(String(text));
     u.lang = 'zh-CN';
     u.rate = 0.9;
     u.pitch = 1.1;
-    const zh = ttsVoices.find(function(v){ return /^zh/i.test(v.lang || ''); });
+    const zh = ttsVoices.find(function(v){ return /^zh/i.test(v.lang || ''); }) ||
+               ttsVoices.find(function(v){ return /chinese|中文|普通话/i.test(v.name || ''); });
     if (zh) u.voice = zh;
-    window.speechSynthesis.speak(u);
+    if (!ttsReady) warmUpTts();               // 首次先解锁引擎
+    window.speechSynthesis.cancel();
+    // iOS: cancel 后立即 speak 会静默，延迟一点再播
+    setTimeout(function() {
+      try { window.speechSynthesis.speak(u); } catch(e) {}
+    }, ttsReady ? 60 : 120);
   } catch(e) {}
 }
 const EMOJI_NAMES = { '🍎':'苹果', '🍊':'橘子', '🍇':'葡萄', '🍓':'草莓', '🍌':'香蕉', '🍉':'西瓜' };
@@ -1592,6 +1628,7 @@ adminOverlay.addEventListener('click', function(e) {
 /* ========== INIT ========== */
 
 if (!ttsSupported && replayBtn) replayBtn.style.display = 'none';
+if (!ttsSupported) { const t = document.getElementById('ttsTip'); if (t) t.hidden = false; }
 refreshHeader();
 showView(viewHome);
 
