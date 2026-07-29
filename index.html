@@ -695,18 +695,19 @@ function generateCountingQuestions() {
   return questions;
 }
 
-function generateMathQuestions() {
+function generateMathQuestions(maxNum) {
+  maxNum = maxNum || 10;
   const questions = [];
   for (let i = 0; i < 10; i++) {
     const isAdd = Math.random() > 0.5;
     let a, b, answer, question;
     if (isAdd) {
-      answer = 2 + Math.floor(Math.random() * 9);
+      answer = 2 + Math.floor(Math.random() * (maxNum - 1));
       a = 1 + Math.floor(Math.random() * (answer - 1));
       b = answer - a;
       question = a + ' + ' + b + ' = ?';
     } else {
-      a = 2 + Math.floor(Math.random() * 9);
+      a = 2 + Math.floor(Math.random() * (maxNum - 1));
       b = 1 + Math.floor(Math.random() * a);
       answer = a - b;
       question = a + ' - ' + b + ' = ?';
@@ -716,7 +717,7 @@ function generateMathQuestions() {
     let safety = 0;
     while (opts.size < 4 && safety < 100) {
       safety++;
-      const cand = String(Math.floor(Math.random() * 11));
+      const cand = String(Math.floor(Math.random() * (maxNum + 1)));
       opts.add(cand);
     }
     const shuffledOpts = shuffle([...opts]);
@@ -731,14 +732,18 @@ function startQuiz(module) {
     return;
   }
   stopConfetti();
-  const titles = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数', math:'🧮 加减' };
+
+  if (module === 'math') {
+    showMathDifficultyPicker();
+    return;
+  }
+
+  const titles = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数' };
   quizTitle.textContent = titles[module];
 
   let questions;
   if (module === 'counting') {
     questions = generateCountingQuestions();
-  } else if (module === 'math') {
-    questions = generateMathQuestions();
   } else {
     const bank = appData.quizBank[module];
     const picked = shuffle(bank).slice(0, 10);
@@ -758,6 +763,35 @@ function startQuiz(module) {
     wrongAttempts: 0
   };
 
+  showView(viewQuiz);
+  renderQuestion();
+}
+
+function showMathDifficultyPicker() {
+  quizTitle.textContent = '🧮 加减法';
+  progressFill.style.width = '0%';
+  questionArea.innerHTML = '<div class="question-emoji" style="font-size:64px;">🧮</div><div class="question-label">选择难度</div>';
+  optionsGrid.innerHTML =
+    '<button class="option-btn math-diff-btn" data-max="10">🔹 10以内加减法</button>' +
+    '<button class="option-btn math-diff-btn" data-max="20">🔹 20以内加减法</button>';
+  quizState = null;
+  showView(viewQuiz);
+}
+
+function startMathQuiz(maxNum) {
+  stopConfetti();
+  quizTitle.textContent = '🧮 ' + maxNum + '以内加减';
+  const questions = generateMathQuestions(maxNum);
+  quizState = {
+    module: 'math',
+    questions,
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    firstTry: true,
+    wrongAttempts: 0,
+    maxNum: maxNum
+  };
   showView(viewQuiz);
   renderQuestion();
 }
@@ -1108,6 +1142,10 @@ viewHome.addEventListener('click', function(e) {
 optionsGrid.addEventListener('click', function(e) {
   const btn = e.target.closest('.option-btn');
   if (!btn || btn.disabled) return;
+  if (btn.classList.contains('math-diff-btn')) {
+    startMathQuiz(parseInt(btn.dataset.max));
+    return;
+  }
   handleAnswer(btn);
 });
 
