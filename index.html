@@ -322,6 +322,108 @@ header .star-badge .star-icon {
   100% { opacity:0; transform: translateY(-30px) scale(0.8); }
 }
 
+/* === 反馈动画系统（新增）=== */
+.fb-medal {
+  position: fixed; left: 50%; top: 45%;
+  width: 120px; height: 120px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 48px; z-index: 200; pointer-events: none;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+  animation: medalPop 0.5s ease forwards;
+}
+@keyframes medalPop {
+  0%   { transform: translate(-50%,-50%) scale(0); }
+  60%  { transform: translate(-50%,-50%) scale(1.2); }
+  100% { transform: translate(-50%,-50%) scale(1); }
+}
+
+.fb-bg-flash {
+  position: fixed; inset: 0; background: #FFD700; opacity: 0.3;
+  z-index: 150; pointer-events: none; animation: bgFlash 0.3s ease forwards;
+}
+@keyframes bgFlash {
+  0%   { opacity: 0.3; }
+  100% { opacity: 0; }
+}
+
+.fb-particle {
+  position: fixed; z-index: 160; pointer-events: none;
+  animation-name: particleFall; animation-timing-function: ease-in;
+  animation-fill-mode: forwards; will-change: transform, opacity;
+}
+@keyframes particleFall {
+  0%   { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--drift,0), 110vh) rotate(360deg); opacity: 0; }
+}
+
+.fb-combo {
+  position: fixed; left: 50%; top: 62%; transform: translateX(-50%);
+  font-size: 24px; font-weight: 700; z-index: 200; pointer-events: none;
+  color: #FF6B6B; text-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  animation: comboSlide 1.5s ease forwards;
+}
+@keyframes comboSlide {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(30px); }
+  20%  { opacity: 1; transform: translateX(-50%) translateY(0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.fb-wrong {
+  position: fixed; left: 50%; top: 45%; transform: translate(-50%,-50%);
+  z-index: 200; pointer-events: none; display: flex; flex-direction: column;
+  align-items: center; gap: 12px; animation: wrongPop 2s ease forwards;
+}
+.fb-wrong-circle {
+  width: 100px; height: 100px; border-radius: 50%; background: #E8F4FD;
+  display: flex; align-items: center; justify-content: center; font-size: 40px;
+  box-shadow: 0 6px 20px rgba(74,144,217,0.25);
+}
+.fb-wrong-text { font-size: 20px; color: #4A90D9; font-weight: 600; }
+@keyframes wrongPop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.6); }
+  15%  { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  85%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.option-btn.fb-blink { animation: correctBlink 0.3s ease; }
+@keyframes correctBlink {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(76,175,80,0); background: transparent; }
+  50%      { box-shadow: 0 0 0 4px rgba(76,175,80,0.6); background: rgba(76,175,80,0.25); border-color: #4CAF50; }
+}
+
+.fb-fly-star {
+  position: fixed; font-size: 48px; z-index: 190; pointer-events: none;
+  transform: translate(-50%,-50%);
+}
+.fb-counter-bump { animation: counterBump 0.3s ease; }
+@keyframes counterBump {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.4); }
+  100% { transform: scale(1); }
+}
+.fb-counter-gold { animation: counterGold 0.3s ease; }
+@keyframes counterGold {
+  0%   { color: inherit; }
+  50%  { color: #FFD700; }
+  100% { color: inherit; }
+}
+
+.fb-achievement {
+  position: fixed; left: 50%; top: 40%; transform: translate(-50%,-50%);
+  font-size: 48px; font-weight: 800; z-index: 210; pointer-events: none;
+  color: #FFD700; text-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  animation: achievementPop 1.5s ease forwards;
+}
+@keyframes achievementPop {
+  0%   { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+  20%  { opacity: 1; transform: translate(-50%,-50%) scale(1.1); }
+  40%  { transform: translate(-50%,-50%) scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.05); }
+}
+
 /* ---- Results Page ---- */
 .results-container {
   flex:1;
@@ -643,6 +745,175 @@ function showFeedback(text) {
   void feedbackText.offsetWidth;
   feedbackText.style.animation = 'feedbackPop 1.2s ease forwards';
   setTimeout(() => feedbackOverlay.classList.add('hidden'), 1200);
+}
+
+/* === 反馈动画系统（新增）=== */
+/* 连击计数：仅页面变量，刷新归零；答错不重置（保护信心），仅新一轮开始时归零 */
+let comboCount = 0;
+
+function initFeedbackSystem() {
+  /* 预留：如需预创建 DOM 节点可放这里，目前无需 */
+}
+
+/* ---- 答对反馈 ---- */
+function onCorrectAnswer(correctBtn, gainedStar) {
+  comboCount++;
+  showMedal();
+  flashBackground();
+  spawnEmojiParticles();
+  showComboText(comboCount);
+  if (gainedStar) {
+    flyStarToCounter();
+    checkStarAchievement();
+  }
+}
+
+/* ---- 答错反馈 ---- */
+function onWrongAnswer(correctBtn, isFinal) {
+  showWrongCircle();
+  if (isFinal && correctBtn) blinkCorrectAnswer(correctBtn);
+  /* 连击不重置（按设计决定） */
+}
+
+/* 彩色勋章弹出 */
+function showMedal() {
+  const colors = ['#FF6B6B','#4ECDC4','#FFE66D','#A8E6CF','#FF8A5C'];
+  const bg = colors[Math.floor(Math.random() * colors.length)];
+  const icon = Math.random() < 0.5 ? '✅' : '🌟';
+  const medal = document.createElement('div');
+  medal.className = 'fb-medal';
+  medal.style.background = bg;
+  medal.textContent = icon;
+  document.body.appendChild(medal);
+  setTimeout(() => medal.remove(), 1500);
+}
+
+/* 背景金色闪烁 */
+function flashBackground() {
+  const flash = document.createElement('div');
+  flash.className = 'fb-bg-flash';
+  document.body.appendChild(flash);
+  setTimeout(() => flash.remove(), 300);
+}
+
+/* 彩色 emoji 粒子飘落（15-20 个，从四周飘入） */
+function spawnEmojiParticles() {
+  const emojis = ['🎉','⭐','🌈','🌸','🍭','🎈','🎊','✨'];
+  const count = 15 + Math.floor(Math.random() * 6);
+  for (let i = 0; i < count; i++) {
+    const p = document.createElement('div');
+    p.className = 'fb-particle';
+    p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    p.style.fontSize = (24 + Math.random() * 16) + 'px';
+    const r = Math.random();
+    if (r < 0.5) {
+      p.style.left = (Math.random() * 100) + 'vw';
+      p.style.top = '-10vh';
+      p.style.setProperty('--drift', (Math.random() * 40 - 20) + 'vw');
+    } else if (r < 0.75) {
+      p.style.left = '-10vw';
+      p.style.top = (Math.random() * 60) + 'vh';
+      p.style.setProperty('--drift', (30 + Math.random() * 30) + 'vw');
+    } else {
+      p.style.left = '110vw';
+      p.style.top = (Math.random() * 60) + 'vh';
+      p.style.setProperty('--drift', -(30 + Math.random() * 30) + 'vw');
+    }
+    p.style.animationDuration = (1.6 + Math.random() * 0.6) + 's';
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 2300);
+  }
+}
+
+/* 连击文字（3/5/10 阈值） */
+function showComboText(n) {
+  let text;
+  if (n >= 10) text = '🏆 无敌！';
+  else if (n >= 5) text = '⭐ 太棒了！';
+  else if (n >= 3) text = '🔥 ' + n + '连击！';
+  else return;
+  const el = document.createElement('div');
+  el.className = 'fb-combo';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
+}
+
+/* 答错温柔蓝圈 + 鼓励文案 */
+function showWrongCircle() {
+  const el = document.createElement('div');
+  el.className = 'fb-wrong';
+  el.innerHTML = '<div class="fb-wrong-circle">💪</div><div class="fb-wrong-text">再想想哦，你可以的！</div>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2000);
+}
+
+/* 正确答案绿色高亮闪烁 3 次（仅最终揭示时调用） */
+function blinkCorrectAnswer(btn) {
+  let n = 0;
+  const iv = setInterval(() => {
+    btn.classList.add('fb-blink');
+    setTimeout(() => btn.classList.remove('fb-blink'), 300);
+    n++;
+    if (n >= 3) clearInterval(iv);
+  }, 600);
+}
+
+/* 星星飞入顶部计数器（沿弧线，Web Animations API 原生实现） */
+function flyStarToCounter() {
+  const star = document.createElement('div');
+  star.className = 'fb-fly-star';
+  star.textContent = '⭐';
+  const startX = window.innerWidth / 2;
+  const startY = window.innerHeight / 2;
+  const badge = document.querySelector('.star-badge');
+  const rect = badge.getBoundingClientRect();
+  const endX = rect.left + rect.width / 2;
+  const endY = rect.top + rect.height / 2;
+  const dx = endX - startX, dy = endY - startY;
+  const midX = startX + dx * 0.5;
+  const midY = Math.min(startY, endY) - 120;
+  star.style.left = startX + 'px';
+  star.style.top = startY + 'px';
+  document.body.appendChild(star);
+  const anim = star.animate([
+    { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+    { transform: 'translate(' + (midX - startX) + 'px,' + (midY - startY) + 'px) scale(1.1)', opacity: 1, offset: 0.5 },
+    { transform: 'translate(' + dx + 'px,' + dy + 'px) scale(0.4)', opacity: 0.2 }
+  ], { duration: 600, easing: 'ease-in-out' });
+  anim.onfinish = () => { star.remove(); bumpCounter(); };
+}
+
+/* 计数器数字放大 + 金色闪烁 */
+function bumpCounter() {
+  const el = document.getElementById('starCount');
+  if (el) {
+    el.classList.remove('fb-counter-bump');
+    void el.offsetWidth;
+    el.classList.add('fb-counter-bump');
+  }
+  const badge = document.querySelector('.star-badge');
+  if (badge) {
+    badge.classList.remove('fb-counter-gold');
+    void badge.offsetWidth;
+    badge.classList.add('fb-counter-gold');
+    setTimeout(() => badge.classList.remove('fb-counter-gold'), 300);
+  }
+}
+
+/* 十星成就检测（达到 10 的倍数触发） */
+function checkStarAchievement() {
+  if (appData.stars > 0 && appData.stars % 10 === 0) {
+    showAchievement(appData.stars);
+  }
+}
+
+function showAchievement(n) {
+  const el = document.createElement('div');
+  el.className = 'fb-achievement';
+  el.textContent = '🌟 ' + n + '星成就！';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 1500);
 }
 
 /* ========== AUDIO ========== */
@@ -1000,6 +1271,7 @@ function startQuiz(module) {
     return;
   }
   stopConfetti();
+  comboCount = 0;
 
   if (module === 'math') {
     showMathDifficultyPicker();
@@ -1178,6 +1450,8 @@ function finishMemoryGame() {
   saveData(appData);
   refreshHeader();
   spawnConfetti();
+  flyStarToCounter();
+  checkStarAchievement();
   quizState = {
     module: 'memory',
     questions: new Array(total).fill(null),
@@ -1295,15 +1569,19 @@ function handleAnswer(btn) {
       saveData(appData);
       refreshHeader();
       spawnConfetti();
-      showFeedback('太棒了 ⭐');
+      onCorrectAnswer(btn, true);
     } else {
-      showFeedback('答对了');
+      onCorrectAnswer(btn, false);
     }
 
     setTimeout(nextQuestion, 1500);
   } else {
     playWrongSound();
     btn.classList.add('wrong');
+    const correctIdx = q.options.indexOf(q.correct);
+    const correctBtn = document.querySelector('.option-btn[data-index="' + correctIdx + '"]');
+    const isFinal = quizState.wrongAttempts >= 2;
+    onWrongAnswer(correctBtn, isFinal);
     quizState.firstTry = false;
     quizState.wrongAttempts++;
     if (quizState.wrongAttempts >= 3) {
@@ -1314,11 +1592,9 @@ function handleAnswer(btn) {
           b.classList.add('correct');
         }
       });
-      showFeedback('答案是 ' + q.correct);
       setTimeout(nextQuestion, 2000);
     } else {
       setTimeout(() => btn.classList.remove('wrong'), 600);
-      showFeedback('再试一次');
     }
   }
 }
@@ -1630,6 +1906,7 @@ adminOverlay.addEventListener('click', function(e) {
 if (!ttsSupported && replayBtn) replayBtn.style.display = 'none';
 if (!ttsSupported) { const t = document.getElementById('ttsTip'); if (t) t.hidden = false; }
 refreshHeader();
+initFeedbackSystem();
 showView(viewHome);
 
 })();
