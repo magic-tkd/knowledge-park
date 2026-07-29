@@ -678,19 +678,67 @@ let quizState = null;
 function generateCountingQuestions() {
   const emojis = ['🍎','🍊','🍋','🍇','🍓','🌸','⭐','🐱','🐶','🐰','🐟','🦋','🌺','🍭','🎈'];
   const questions = [];
+  /* 前 6 题：数一数；后 4 题：比一比 */
   for (let i = 0; i < 10; i++) {
-    const count = 1 + Math.floor(Math.random() * 10);
-    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-    const correct = String(count);
-    const opts = new Set([correct]);
-    let safety = 0;
-    while (opts.size < 4 && safety < 100) {
-      safety++;
-      const cand = String(1 + Math.floor(Math.random() * 10));
-      opts.add(cand);
+    if (i < 6) {
+      /* ---- 数一数 ---- */
+      const count = 1 + Math.floor(Math.random() * 10);
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      const correct = String(count);
+      const opts = new Set([correct]);
+      let safety = 0;
+      while (opts.size < 4 && safety < 100) {
+        safety++;
+        const cand = String(1 + Math.floor(Math.random() * 10));
+        opts.add(cand);
+      }
+      const shuffledOpts = shuffle([...opts]);
+      questions.push({ type:'count', count, emoji, options: shuffledOpts, correct });
+    } else {
+      /* ---- 比一比 ---- */
+      const leftCount = 2 + Math.floor(Math.random() * 9);    /* 2~10 */
+      const rightCount = 2 + Math.floor(Math.random() * 9);   /* 2~10 */
+      /* 避免左右完全相等几率太高：若相等则调整一侧 */
+      const adjustedRight = rightCount === leftCount
+        ? (leftCount >= 6 ? leftCount - 1 : leftCount + 1)
+        : rightCount;
+      const leftEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      let rightEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      while (rightEmoji === leftEmoji) rightEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      /* 随机问"哪边多" 或 "哪边少" */
+      const askMore = Math.random() > 0.5;
+      const largerSide = leftCount > adjustedRight ? 'left' : 'right';
+      const smallerSide = leftCount > adjustedRight ? 'right' : 'left';
+      const answer = askMore ? largerSide : smallerSide;
+      const allOpts = shuffle(['left', 'right']);
+      /* 4 个选项：正确 + 另一边 + "一样多" + "😅" */
+      const labels = {
+        left: '左边更多',
+        right: '右边更多'
+      };
+      if (askMore) {
+        labels.left = '左边更多';
+        labels.right = '右边更多';
+      } else {
+        labels.left = '左边更少';
+        labels.right = '右边更少';
+      }
+      const options = [
+        labels[answer],
+        labels[answer === 'left' ? 'right' : 'left'],
+        leftCount === adjustedRight ? '一样多' : (askMore ? '一样多' : '一样多'),
+        '😅 不知道'
+      ];
+      const correct = labels[answer];
+      questions.push({
+        type: 'compare',
+        left: { count: leftCount, emoji: leftEmoji },
+        right: { count: adjustedRight, emoji: rightEmoji },
+        question: askMore ? '哪边更多？' : '哪边更少？',
+        options,
+        correct
+      });
     }
-    const shuffledOpts = shuffle([...opts]);
-    questions.push({ count, emoji, options: shuffledOpts, correct });
   }
   return questions;
 }
@@ -816,9 +864,27 @@ function renderQuestion() {
     qHTML = '<div class="question-text">' + q.pinyin + '</div>' +
             '<div class="question-label">点击正确的汉字</div>';
   } else if (module === 'counting') {
-    const emojis = Array(q.count).fill(q.emoji).join(' ');
-    qHTML = '<div class="question-emoji" style="font-size:48px; word-break:break-all; line-height:1.8;">' + emojis + '</div>' +
-            '<div class="question-label">一共有几个？数一数</div>';
+    if (q.type === 'compare') {
+      const leftEmojis = Array(q.left.count).fill(q.left.emoji).join(' ');
+      const rightEmojis = Array(q.right.count).fill(q.right.emoji).join(' ');
+      qHTML =
+        '<div style="display:flex; justify-content:center; align-items:center; gap:24px; flex-wrap:wrap;">' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:36px; line-height:1.6; max-width:180px; word-break:break-all;">' + leftEmojis + '</div>' +
+            '<div style="font-size:18px; color:#888; margin-top:4px;">左边</div>' +
+          '</div>' +
+          '<div style="font-size:40px; font-weight:bold; color:#FF6B6B;">VS</div>' +
+          '<div style="text-align:center;">' +
+            '<div style="font-size:36px; line-height:1.6; max-width:180px; word-break:break-all;">' + rightEmojis + '</div>' +
+            '<div style="font-size:18px; color:#888; margin-top:4px;">右边</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="question-label">' + q.question + '</div>';
+    } else {
+      const emojis = Array(q.count).fill(q.emoji).join(' ');
+      qHTML = '<div class="question-emoji" style="font-size:48px; word-break:break-all; line-height:1.8;">' + emojis + '</div>' +
+              '<div class="question-label">一共有几个？数一数</div>';
+    }
   } else if (module === 'math') {
     qHTML = '<div class="question-text" style="font-size:40px;">' + q.question + '</div>' +
             '<div class="question-label">算一算，选答案</div>';
