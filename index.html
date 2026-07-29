@@ -1536,7 +1536,7 @@ function renderQuestion() {
   if (module === 'characters') speakText = '这是什么？点下面的字';
   else if (module === 'pinyin') speakText = '请选出读音';
   else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
-  else if (module === 'math') speakText = '算一算，' + q.question.replace('=', '等于');
+  else if (module === 'math') speakText = '算一算，' + q.question.replace(/=/g, '等于').replace(/\+/g, '加').replace(/-/g, '减').replace(/\?/g, '');
   else if (module === 'pattern') speakText = '接下来应该是什么？';
   else if (module === 'classify') speakText = '哪个不是' + q.mainCategory + '？';
   currentSpeakText = speakText;
