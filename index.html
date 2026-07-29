@@ -603,6 +603,15 @@ function spawnConfetti() {
   }
 }
 
+function stopConfetti() {
+  if (confettiAnimId) {
+    cancelAnimationFrame(confettiAnimId);
+    confettiAnimId = null;
+  }
+  confettiParticles = [];
+  ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+}
+
 /* ========== VIEW MANAGEMENT ========== */
 
 function refreshHeader() {
@@ -668,6 +677,11 @@ function generateMathQuestions() {
 }
 
 function startQuiz(module) {
+  if (!module || !['characters','pinyin','counting','math'].includes(module)) {
+    console.error('Invalid module:', module);
+    return;
+  }
+  stopConfetti();
   const titles = { characters:'📖 识字', pinyin:'🔤 拼音', counting:'🔢 数数', math:'🧮 加减' };
   quizTitle.textContent = titles[module];
 
@@ -734,15 +748,10 @@ function renderQuestion() {
     optHTML += '<button class="option-btn" data-index="' + i + '">' + opt + '</button>';
   });
   optionsGrid.innerHTML = optHTML;
-
-  document.querySelectorAll('.option-btn').forEach(btn => {
-    btn.addEventListener('click', handleAnswer);
-  });
 }
 
-function handleAnswer(e) {
-  if (quizState.answered) return;
-  const btn = e.currentTarget;
+function handleAnswer(btn) {
+  if (!quizState || quizState.answered) return;
   const chosenIdx = parseInt(btn.dataset.index);
   const q = quizState.questions[quizState.currentIndex];
   const chosen = q.options[chosenIdx];
@@ -1027,14 +1036,29 @@ function closeAdmin() {
 
 /* ========== NAVIGATION EVENTS ========== */
 
-document.querySelectorAll('.module-card').forEach(card => {
-  card.addEventListener('click', function() {
-    startQuiz(this.dataset.module);
-  });
+viewHome.addEventListener('click', function(e) {
+  const card = e.target.closest('.module-card');
+  if (!card) return;
+  const module = card.dataset.module;
+  if (module) startQuiz(module);
 });
 
-$('#quizBack').addEventListener('click', () => showView(viewHome));
-$('#resultsBack').addEventListener('click', () => showView(viewHome));
+optionsGrid.addEventListener('click', function(e) {
+  const btn = e.target.closest('.option-btn');
+  if (!btn || btn.disabled) return;
+  handleAnswer(btn);
+});
+
+$('#quizBack').addEventListener('click', () => {
+  stopConfetti();
+  quizState = null;
+  showView(viewHome);
+});
+$('#resultsBack').addEventListener('click', () => {
+  stopConfetti();
+  quizState = null;
+  showView(viewHome);
+});
 $('#adminBtn').addEventListener('click', openAdmin);
 adminOverlay.addEventListener('click', function(e) {
   if (e.target === adminOverlay) closeAdmin();
