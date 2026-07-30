@@ -1007,6 +1007,35 @@ function speak(text) {
     }, ttsReady ? 60 : 120);
   } catch(e) {}
 }
+
+/* ========== 拼音标准发音音频库 ==========
+   浏览器 TTS 读不准拼音（会把 mā 读成字母），
+   改用预生成的标准女声(微软晓晓)音频文件播放。
+   音频位于 audio/ 目录，文件名见下方映射。 */
+const pinyinAudioMap = {
+  // 题库 20 个音节（键为 quizBank 里的 pinyin 字段）
+  'mā':'ma1.mp3','bà':'ba4.mp3','mǐ':'mi3.mp3','huā':'hua1.mp3','gē':'ge1.mp3',
+  'dì':'di4.mp3','shū':'shu1.mp3','shuǐ':'shui3.mp3','huǒ':'huo3.mp3','yú':'yu2.mp3',
+  'chē':'che1.mp3','niǎo':'niao3.mp3','yuè':'yue4.mp3','fēng':'feng1.mp3','xuě':'xue3.mp3',
+  'hé':'he2.mp3','cǎo':'cao3.mp3','xīng':'xing1.mp3','yáng':'yang2.mp3','niú':'niu2.mp3',
+  // 24 个韵母（供后续"认识韵母"学习模块使用）
+  'a':'a.mp3','o':'o.mp3','e':'e.mp3','i':'i.mp3','u':'u.mp3','ü':'v.mp3',
+  'ai':'ai.mp3','ei':'ei.mp3','ui':'ui.mp3','ao':'ao.mp3','ou':'ou.mp3','iu':'iu.mp3',
+  'ie':'ie.mp3','üe':'ve.mp3','er':'er.mp3','an':'an.mp3','en':'en.mp3','in':'in.mp3',
+  'un':'un.mp3','ün':'vn.mp3','ang':'ang.mp3','eng':'eng.mp3','ing':'ing.mp3','ong':'ong.mp3'
+};
+let currentPinyin = '';
+function playPinyinAudio(pinyin) {
+  const file = pinyinAudioMap[pinyin];
+  if (!file) return false;
+  try {
+    const a = new Audio('audio/' + file);
+    const p = a.play();
+    if (p && p.catch) p.catch(function(){});  // iOS 无手势时可能拒播，忽略，重读按钮可补救
+    return true;
+  } catch(e) { return false; }
+}
+
 const EMOJI_NAMES = { '🍎':'苹果', '🍊':'橘子', '🍇':'葡萄', '🍓':'草莓', '🍌':'香蕉', '🍉':'西瓜' };
 
 /* ========== CONFETTI ========== */
@@ -1533,8 +1562,12 @@ function renderQuestion() {
   optionsGrid.innerHTML = optHTML;
 
   let speakText = '';
+  currentPinyin = (module === 'pinyin') ? q.pinyin : '';
   if (module === 'characters') speakText = '这是什么？点下面的字';
-  else if (module === 'pinyin') speakText = '请选出读音';
+  else if (module === 'pinyin') {
+    // 拼音题：用预生成的标准女声音频读音节，不再用浏览器朗读（读不准）
+    if (!playPinyinAudio(q.pinyin)) speakText = '请选出读音';
+  }
   else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
   else if (module === 'math') speakText = '算一算，' + q.question.replace(/=/g, '等于').replace(/\+/g, '加').replace(/-/g, '减').replace(/\?/g, '');
   else if (module === 'pattern') speakText = '接下来应该是什么？';
@@ -1888,6 +1921,7 @@ $('#quizBack').addEventListener('click', () => {
   showView(viewHome);
 });
 $('#replayBtn').addEventListener('click', function() {
+  if (currentPinyin) { playPinyinAudio(currentPinyin); return; }
   if (currentSpeakText) speak(currentSpeakText);
 });
 $('#resultsBack').addEventListener('click', () => {
