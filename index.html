@@ -149,6 +149,33 @@ header .star-badge .star-icon {
 .card-english { border-color: #FBBF24; }
 .card-english .label { color: #FBBF24; }
 .card-english .emoji { color: #FBBF24; }
+.card-books { border-color: #FB7185; }
+.card-books .label { color: #FB7185; }
+.card-books .emoji { color: #FB7185; }
+
+/* ---- 绘本（单词书 · 模式A） ---- */
+.books-container { padding: 16px; max-width: 720px; margin: 0 auto; }
+.books-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-top: 12px; }
+.book-card { background: var(--white); border: 3px solid #FB7185; border-radius: var(--radius); padding: 20px 12px; text-align: center; cursor: pointer; box-shadow: var(--shadow); transition: transform .2s; position: relative; }
+.book-card:active { transform: scale(0.95); }
+.book-card .book-emoji { font-size: 44px; }
+.book-card .book-title { font-size: 20px; font-weight: 600; color: #FB7185; margin-top: 6px; }
+.book-card .book-count { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+.book-card .book-done { position: absolute; top: 8px; right: 10px; font-size: 18px; }
+.reader-container { padding: 16px; max-width: 720px; margin: 0 auto; }
+.reader-page { text-align: center; padding: 30px 10px; min-height: 44vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.reader-emoji { font-size: 140px; line-height: 1; margin-bottom: 18px; }
+.reader-word { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: 1px; margin-bottom: 22px; }
+.reader-listen { font-size: 22px; padding: 14px 30px; border: none; border-radius: 40px; background: #FB7185; color: #fff; cursor: pointer; box-shadow: var(--shadow); }
+.reader-listen:active { transform: scale(0.96); }
+.reader-counter { margin-top: 22px; font-size: 16px; color: var(--text-light); }
+.reader-nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; }
+.reader-btn { flex: 1; font-size: 20px; padding: 14px; border: 2px solid #FB7185; border-radius: 16px; background: var(--white); color: #FB7185; cursor: pointer; }
+.reader-btn:active { transform: scale(0.97); }
+.reader-btn:disabled { opacity: .4; cursor: default; }
+.reader-finish { text-align: center; padding: 30px 16px; }
+.reader-finish .finish-emoji { font-size: 90px; }
+.reader-finish .finish-text { font-size: 24px; font-weight: 600; margin: 16px 0; color: var(--text); }
 
 /* ---- Quiz Page ---- */
 .quiz-container {
@@ -596,6 +623,11 @@ header .star-badge .star-icon {
       <div class="label">英语</div>
       <div class="desc">听一听，选图片</div>
     </div>
+    <div class="module-card card-books" data-module="books">
+      <div class="emoji">📚</div>
+      <div class="label">绘本</div>
+      <div class="desc">听故事，看图画</div>
+    </div>
   </div>
 
   <div id="ttsTip" class="tts-tip" hidden>🔇 当前浏览器不支持语音朗读，请改用 Safari 或 Chrome 打开</div>
@@ -621,6 +653,33 @@ header .star-badge .star-icon {
     <div class="results-stars" id="resultsStars"></div>
     <button class="results-btn" id="resultsBack">返回乐园</button>
   </div>
+
+  <!-- Books (绘本 · 单词书) -->
+  <div id="viewBooks" class="books-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="booksBack">←</button>
+      <span class="quiz-title">📚 绘本乐园</span>
+      <span style="width:40px;display:inline-block"></span>
+    </div>
+    <div class="books-shelf" id="booksShelf"></div>
+  </div>
+
+  <!-- Reader -->
+  <div id="viewReader" class="reader-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="readerBack">←</button>
+      <span class="quiz-title" id="readerTitle"></span>
+      <button class="replay-btn" id="readerReplay" title="再听一遍">🔊</button>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="readerProgress" style="width:0%"></div>
+    </div>
+    <div class="reader-page" id="readerPage"></div>
+    <div class="reader-nav">
+      <button class="reader-btn" id="readerPrev">← 上一页</button>
+      <button class="reader-btn" id="readerNext">下一页 →</button>
+    </div>
+  </div>
 </div>
 
 <!-- Admin Panel Overlay -->
@@ -642,6 +701,7 @@ function defaultData() {
     stars: 0,
       soundEnabled: true,
       ttsEnabled: true,
+      booksFinished: {},
       quizBank: {
         characters: [
         {emoji:'🍎',options:['苹果','香蕉','西瓜','葡萄'],correct:'苹果'},
@@ -775,6 +835,7 @@ function loadData() {
     if (!parsed.quizBank.characters) parsed.quizBank.characters = defaultData().quizBank.characters;
     if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
     if (!parsed.quizBank.english) parsed.quizBank.english = defaultData().quizBank.english;
+    if (!parsed.booksFinished || typeof parsed.booksFinished !== 'object') parsed.booksFinished = {};
     return parsed;
   } catch(e) {
     return defaultData();
@@ -786,6 +847,21 @@ function saveData(data) {
 }
 
 let appData = loadData();
+
+// 绘本 · 模式A（单词书）：从英语词库按主题分组生成，复用已生成的单词音频(audio/en/<word>.mp3)
+const BOOK_SHELF = [
+  { id:'animals',   title:'动物', emoji:'🦁', words:['cat','dog','rabbit','cow','pig','fish','bird','elephant','lion','bear'] },
+  { id:'fruits',    title:'果蔬', emoji:'🍎', words:['apple','banana','orange','grape','strawberry','watermelon','carrot','tomato','pear','peach'] },
+  { id:'colors',    title:'颜色', emoji:'🌈', words:['red','blue','yellow','green'] },
+  { id:'numbers',   title:'数字', emoji:'🔢', words:['one','two','three','four','five','six','seven','eight','nine','ten'] },
+  { id:'family',    title:'家人', emoji:'👪', words:['mom','dad','baby','grandma','grandpa','brother','sister'] },
+  { id:'body',      title:'身体', emoji:'🧍', words:['eye','ear','nose','mouth','hand','foot'] },
+  { id:'toys',      title:'玩具', emoji:'🧸', words:['ball','doll','teddy','balloon','kite','robot'] },
+  { id:'transport', title:'交通', emoji:'🚗', words:['car','bus','train','bike','boat','plane','rocket'] }
+];
+// 单词 → 代表 emoji（取自英语题库的 correct 字段，单一数据源）
+const wordEmoji = {};
+appData.quizBank.english.forEach(function(q){ wordEmoji[q.word] = q.correct; });
 
 /* ========== DOM REFS ========== */
 
@@ -809,6 +885,17 @@ const resultsScore = $('#resultsScore');
 const resultsStars = $('#resultsStars');
 const feedbackOverlay = $('#feedbackOverlay');
 const feedbackText = $('#feedbackText');
+const viewBooks = $('#viewBooks');
+const viewReader = $('#viewReader');
+const booksShelf = $('#booksShelf');
+const readerPage = $('#readerPage');
+const readerTitle = $('#readerTitle');
+const readerProgress = $('#readerProgress');
+const readerPrev = $('#readerPrev');
+const readerNext = $('#readerNext');
+const booksBack = $('#booksBack');
+const readerBack = $('#readerBack');
+const readerReplay = $('#readerReplay');
 
 /* ========== HELPERS ========== */
 
@@ -1233,6 +1320,8 @@ function showView(view) {
   viewHome.classList.add('hidden');
   viewQuiz.classList.add('hidden');
   viewResults.classList.add('hidden');
+  viewBooks.classList.add('hidden');
+  viewReader.classList.add('hidden');
   view.classList.remove('hidden');
 }
 
@@ -2017,6 +2106,7 @@ viewHome.addEventListener('click', function(e) {
   const card = e.target.closest('.module-card');
   if (!card) return;
   const module = card.dataset.module;
+  if (module === 'books') { startBooks(); return; }
   if (module) startQuiz(module);
 });
 
@@ -2058,6 +2148,114 @@ $('#resultsBack').addEventListener('click', () => {
 $('#adminBtn').addEventListener('click', openAdmin);
 adminOverlay.addEventListener('click', function(e) {
   if (e.target === adminOverlay) closeAdmin();
+});
+
+/* ========== BOOKS (绘本 · 单词书 · 模式A) ========== */
+
+let currentBook = null;
+let bookPageIndex = 0;
+
+function startBooks() {
+  renderBookShelf();
+  showView(viewBooks);
+}
+
+function renderBookShelf() {
+  booksShelf.innerHTML = '';
+  BOOK_SHELF.forEach(function(book) {
+    const done = appData.booksFinished[book.id];
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    card.dataset.book = book.id;
+    card.innerHTML =
+      (done ? '<div class="book-done">✅</div>' : '') +
+      '<div class="book-emoji">' + book.emoji + '</div>' +
+      '<div class="book-title">' + book.title + '</div>' +
+      '<div class="book-count">' + book.words.length + ' 个词</div>';
+    booksShelf.appendChild(card);
+  });
+}
+
+function openBook(bookId) {
+  const book = BOOK_SHELF.find(function(b){ return b.id === bookId; });
+  if (!book) return;
+  currentBook = book;
+  bookPageIndex = 0;
+  readerTitle.textContent = '📖 ' + book.title;
+  showView(viewReader);
+  renderReaderPage();
+}
+
+function renderReaderPage() {
+  if (!currentBook) return;
+  const total = currentBook.words.length;
+  if (bookPageIndex >= total) { renderReaderFinish(); return; }
+  const word = currentBook.words[bookPageIndex];
+  const emoji = wordEmoji[word] || '🔤';
+  readerPage.innerHTML =
+    '<div class="reader-emoji">' + emoji + '</div>' +
+    '<div class="reader-word">' + word + '</div>' +
+    '<button class="reader-listen" data-word="' + word + '">🔊 听一听</button>' +
+    '<div class="reader-counter">' + (bookPageIndex + 1) + ' / ' + total + '</div>';
+  readerProgress.style.width = Math.round(bookPageIndex / total * 100) + '%';
+  readerPrev.disabled = (bookPageIndex === 0);
+  readerNext.disabled = false;
+  readerNext.textContent = (bookPageIndex === total - 1) ? '读完啦 🎉' : '下一页 →';
+  // 翻到新页自动播放当前词（在点击手势链内，允许自动播放）
+  if (appData.soundEnabled) playEnglishAudio(word);
+}
+
+function renderReaderFinish() {
+  const book = currentBook;
+  const firstTime = !appData.booksFinished[book.id];
+  if (firstTime) {
+    appData.booksFinished[book.id] = true;
+    appData.stars += 1;
+    saveData(appData);
+    refreshHeader();
+  }
+  readerProgress.style.width = '100%';
+  readerPage.innerHTML =
+    '<div class="reader-finish">' +
+      '<div class="finish-emoji">🌟</div>' +
+      '<div class="finish-text">' + (firstTime ? '读完啦！获得一颗星 ⭐' : '又读完一遍，真棒！') + '</div>' +
+      '<button class="reader-btn" id="readerFinishBtn">返回书架</button>' +
+    '</div>';
+  readerPrev.disabled = false;
+  readerNext.disabled = true;
+}
+
+function readerGo(delta) {
+  if (!currentBook) return;
+  const total = currentBook.words.length;
+  if (delta > 0) {
+    if (bookPageIndex >= total) return;            // 已在完成页
+    if (bookPageIndex === total - 1) { bookPageIndex = total; renderReaderPage(); return; }
+    bookPageIndex++;
+  } else {
+    if (bookPageIndex === 0) return;
+    bookPageIndex--;
+  }
+  renderReaderPage();
+}
+
+booksShelf.addEventListener('click', function(e) {
+  const card = e.target.closest('.book-card');
+  if (!card) return;
+  openBook(card.dataset.book);
+});
+booksBack.addEventListener('click', function() { showView(viewHome); });
+readerBack.addEventListener('click', function() { currentBook = null; showView(viewBooks); });
+readerPrev.addEventListener('click', function() { readerGo(-1); });
+readerNext.addEventListener('click', function() { readerGo(1); });
+readerReplay.addEventListener('click', function() {
+  if (currentBook && bookPageIndex < currentBook.words.length) playEnglishAudio(currentBook.words[bookPageIndex]);
+});
+readerPage.addEventListener('click', function(e) {
+  const listen = e.target.closest('.reader-listen');
+  if (listen) { playEnglishAudio(listen.dataset.word); return; }
+  const fin = e.target.closest('#readerFinishBtn');
+  if (fin) { currentBook = null; showView(viewBooks); }
 });
 
 /* ========== INIT ========== */
