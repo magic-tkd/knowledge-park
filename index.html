@@ -1117,8 +1117,19 @@ function playPinyinAudio(pinyin) {
   } catch(e) { return false; }
 }
 
-// 英文朗读：用浏览器 TTS 的英文嗓音(en-US)读单词。
-// 与拼音不同，英文单词浏览器读得准，无需预生成音频。
+// 英文单词：优先播放预生成的标准神经嗓音音频(audio/en/<word>.mp3)，
+// 不依赖浏览器 TTS（设备嗓音质量不一、语速过快、发音不稳）。缺失时才回退浏览器。
+function playEnglishAudio(word) {
+  if (!word) return false;
+  try {
+    const a = new Audio('audio/en/' + String(word).toLowerCase() + '.mp3');
+    const p = a.play();
+    if (p && p.catch) p.catch(function(){});  // iOS 无手势时可能拒播，忽略，重读按钮可补救
+    return true;
+  } catch(e) { return false; }
+}
+
+// 英文朗读兜底：仅在预生成音频缺失时用浏览器 TTS 的英文嗓音(en-US)读单词。
 function speakEnglish(text) {
   if (!appData.ttsEnabled || !ttsSupported || !text) return;
   try {
@@ -1678,8 +1689,8 @@ function renderQuestion() {
     if (!playPinyinAudio(q.pinyin)) speakText = '请选出读音';
   }
   else if (module === 'english') {
-    // 英语题：不读中文，直接播放英文单词发音
-    speakEnglish(q.word);
+    // 英语题：优先播放预生成的标准英文单词音频，缺失才回退浏览器朗读
+    if (!playEnglishAudio(q.word)) speakEnglish(q.word);
   }
   else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
   else if (module === 'math') speakText = '算一算，' + q.question.replace(/=/g, '等于').replace(/\+/g, '加').replace(/-/g, '减').replace(/\?/g, '');
@@ -2035,7 +2046,7 @@ $('#quizBack').addEventListener('click', () => {
 });
 $('#replayBtn').addEventListener('click', function() {
   if (currentPinyin) { playPinyinAudio(currentPinyin); return; }
-  if (currentEnglish) { speakEnglish(currentEnglish); return; }
+  if (currentEnglish) { if (!playEnglishAudio(currentEnglish)) speakEnglish(currentEnglish); return; }
   if (currentSpeakText) speak(currentSpeakText);
 });
 $('#resultsBack').addEventListener('click', () => {
