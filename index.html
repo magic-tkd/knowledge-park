@@ -146,6 +146,9 @@ header .star-badge .star-icon {
 .card-classify .label { color: #F472B6; }
 .card-memory { border-color: #60A5FA; }
 .card-memory .label { color: #60A5FA; }
+.card-english { border-color: #FBBF24; }
+.card-english .label { color: #FBBF24; }
+.card-english .emoji { color: #FBBF24; }
 
 /* ---- Quiz Page ---- */
 .quiz-container {
@@ -588,6 +591,11 @@ header .star-badge .star-icon {
       <div class="label">分类</div>
       <div class="desc">找出不同类</div>
     </div>
+    <div class="module-card card-english" data-module="english">
+      <div class="emoji">🔊</div>
+      <div class="label">英语</div>
+      <div class="desc">听一听，选图片</div>
+    </div>
   </div>
 
   <div id="ttsTip" class="tts-tip" hidden>🔇 当前浏览器不支持语音朗读，请改用 Safari 或 Chrome 打开</div>
@@ -678,6 +686,77 @@ function defaultData() {
         {pinyin:'xīng',options:['行','形','星','醒'],correct:'星'},
         {pinyin:'yáng',options:['阳','养','样','羊'],correct:'羊'},
         {pinyin:'niú',options:['扭','牛','纽','钮'],correct:'牛'}
+      ],
+      // 英语启蒙 · 听音选图：word 为要朗读的英文（浏览器 TTS 读英文准），options 为 4 张不同图，correct 为匹配图
+      english: [
+        // 动物
+        {word:'cat',options:['🐱','🐶','🐰','🐮'],correct:'🐱'},
+        {word:'dog',options:['🐶','🐱','🐰','🐷'],correct:'🐶'},
+        {word:'rabbit',options:['🐰','🐱','🐶','🐮'],correct:'🐰'},
+        {word:'cow',options:['🐮','🐷','🐱','🐶'],correct:'🐮'},
+        {word:'pig',options:['🐷','🐮','🐰','🐶'],correct:'🐷'},
+        {word:'fish',options:['🐟','🐦','🐱','🐶'],correct:'🐟'},
+        {word:'bird',options:['🐦','🐟','🐰','🐮'],correct:'🐦'},
+        {word:'elephant',options:['🐘','🐻','🐦','🐟'],correct:'🐘'},
+        {word:'lion',options:['🦁','🐘','🐶','🐱'],correct:'🦁'},
+        {word:'bear',options:['🐻','🦁','🐮','🐰'],correct:'🐻'},
+        // 果蔬
+        {word:'apple',options:['🍎','🍌','🍊','🍇'],correct:'🍎'},
+        {word:'banana',options:['🍌','🍎','🍊','🍓'],correct:'🍌'},
+        {word:'orange',options:['🍊','🍎','🍌','🍉'],correct:'🍊'},
+        {word:'grape',options:['🍇','🍎','🍌','🍊'],correct:'🍇'},
+        {word:'strawberry',options:['🍓','🍎','🍉','🍇'],correct:'🍓'},
+        {word:'watermelon',options:['🍉','🍓','🍌','🍊'],correct:'🍉'},
+        {word:'carrot',options:['🥕','🍅','🍎','🍌'],correct:'🥕'},
+        {word:'tomato',options:['🍅','🥕','🍎','🍊'],correct:'🍅'},
+        {word:'pear',options:['🍐','🍎','🍌','🍊'],correct:'🍐'},
+        {word:'peach',options:['🍑','🍐','🍎','🍇'],correct:'🍑'},
+        // 颜色
+        {word:'red',options:['🔴','🔵','🟡','🟢'],correct:'🔴'},
+        {word:'blue',options:['🔵','🔴','🟡','🟢'],correct:'🔵'},
+        {word:'yellow',options:['🟡','🔴','🔵','🟢'],correct:'🟡'},
+        {word:'green',options:['🟢','🔵','🔴','🟡'],correct:'🟢'},
+        // 数字
+        {word:'one',options:['1️⃣','2️⃣','3️⃣','4️⃣'],correct:'1️⃣'},
+        {word:'two',options:['2️⃣','1️⃣','3️⃣','4️⃣'],correct:'2️⃣'},
+        {word:'three',options:['3️⃣','1️⃣','2️⃣','4️⃣'],correct:'3️⃣'},
+        {word:'four',options:['4️⃣','1️⃣','2️⃣','3️⃣'],correct:'4️⃣'},
+        {word:'five',options:['5️⃣','6️⃣','7️⃣','8️⃣'],correct:'5️⃣'},
+        {word:'six',options:['6️⃣','5️⃣','7️⃣','8️⃣'],correct:'6️⃣'},
+        {word:'seven',options:['7️⃣','5️⃣','6️⃣','8️⃣'],correct:'7️⃣'},
+        {word:'eight',options:['8️⃣','5️⃣','6️⃣','7️⃣'],correct:'8️⃣'},
+        {word:'nine',options:['9️⃣','🔟','1️⃣','2️⃣'],correct:'9️⃣'},
+        {word:'ten',options:['🔟','9️⃣','1️⃣','2️⃣'],correct:'🔟'},
+        // 家人
+        {word:'mom',options:['👩','👨','👶','👵'],correct:'👩'},
+        {word:'dad',options:['👨','👩','👶','👴'],correct:'👨'},
+        {word:'baby',options:['👶','👩','👨','👵'],correct:'👶'},
+        {word:'grandma',options:['👵','👴','👩','👶'],correct:'👵'},
+        {word:'grandpa',options:['👴','👵','👨','👩'],correct:'👴'},
+        {word:'brother',options:['👦','👧','👨','👶'],correct:'👦'},
+        {word:'sister',options:['👧','👦','👩','👶'],correct:'👧'},
+        // 身体部位
+        {word:'eye',options:['👁️','👂','👃','👄'],correct:'👁️'},
+        {word:'ear',options:['👂','👁️','👃','👄'],correct:'👂'},
+        {word:'nose',options:['👃','👂','👁️','👄'],correct:'👃'},
+        {word:'mouth',options:['👄','👂','👃','👁️'],correct:'👄'},
+        {word:'hand',options:['✋','🦶','👂','👃'],correct:'✋'},
+        {word:'foot',options:['🦶','✋','👂','👃'],correct:'🦶'},
+        // 玩具
+        {word:'ball',options:['⚽','🪆','🧸','🎈'],correct:'⚽'},
+        {word:'doll',options:['🪆','⚽','🧸','🧱'],correct:'🪆'},
+        {word:'teddy',options:['🧸','🪆','⚽','🪁'],correct:'🧸'},
+        {word:'balloon',options:['🎈','⚽','🪆','🧱'],correct:'🎈'},
+        {word:'kite',options:['🪁','🎈','🧸','🤖'],correct:'🪁'},
+        {word:'robot',options:['🤖','🎈','🪆','🧱'],correct:'🤖'},
+        // 交通工具
+        {word:'car',options:['🚗','🚌','🚂','🚲'],correct:'🚗'},
+        {word:'bus',options:['🚌','🚗','🚂','✈️'],correct:'🚌'},
+        {word:'train',options:['🚂','🚌','🚗','⛵'],correct:'🚂'},
+        {word:'bike',options:['🚲','🚗','🚌','🚂'],correct:'🚲'},
+        {word:'boat',options:['⛵','🚂','🚗','✈️'],correct:'⛵'},
+        {word:'plane',options:['✈️','⛵','🚂','🚀'],correct:'✈️'},
+        {word:'rocket',options:['🚀','🛸','✈️','🚂'],correct:'🚀'}
       ]
     }
   };
@@ -695,6 +774,7 @@ function loadData() {
     if (typeof parsed.ttsEnabled !== 'boolean') parsed.ttsEnabled = true;
     if (!parsed.quizBank.characters) parsed.quizBank.characters = defaultData().quizBank.characters;
     if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
+    if (!parsed.quizBank.english) parsed.quizBank.english = defaultData().quizBank.english;
     return parsed;
   } catch(e) {
     return defaultData();
@@ -1025,6 +1105,7 @@ const pinyinAudioMap = {
   'un':'un.mp3','ün':'vn.mp3','ang':'ang.mp3','eng':'eng.mp3','ing':'ing.mp3','ong':'ong.mp3'
 };
 let currentPinyin = '';
+let currentEnglish = '';
 function playPinyinAudio(pinyin) {
   const file = pinyinAudioMap[pinyin];
   if (!file) return false;
@@ -1034,6 +1115,28 @@ function playPinyinAudio(pinyin) {
     if (p && p.catch) p.catch(function(){});  // iOS 无手势时可能拒播，忽略，重读按钮可补救
     return true;
   } catch(e) { return false; }
+}
+
+// 英文朗读：用浏览器 TTS 的英文嗓音(en-US)读单词。
+// 与拼音不同，英文单词浏览器读得准，无需预生成音频。
+function speakEnglish(text) {
+  if (!appData.ttsEnabled || !ttsSupported || !text) return;
+  try {
+    if (!ttsVoices.length) loadTtsVoices();   // 刷新 voices（iOS 异步加载）
+    const u = new SpeechSynthesisUtterance(String(text));
+    u.lang = 'en-US';
+    u.rate = 0.85;   // 放慢一点，适合幼儿听清
+    u.pitch = 1.0;
+    const en = ttsVoices.find(function(v){ return /^en/i.test(v.lang || ''); }) ||
+               ttsVoices.find(function(v){ return /english|english|英/i.test(v.name || ''); });
+    if (en) u.voice = en;
+    if (!ttsReady) warmUpTts();               // 首次先解锁引擎
+    window.speechSynthesis.cancel();
+    // iOS: cancel 后立即 speak 会静默，延迟一点再播
+    setTimeout(function() {
+      try { window.speechSynthesis.speak(u); } catch(e) {}
+    }, ttsReady ? 60 : 120);
+  } catch(e) {}
 }
 
 const EMOJI_NAMES = { '🍎':'苹果', '🍊':'橘子', '🍇':'葡萄', '🍓':'草莓', '🍌':'香蕉', '🍉':'西瓜' };
@@ -1295,7 +1398,7 @@ function generateClassificationQuestions() {
 }
 
 function startQuiz(module) {
-  if (!module || !['characters','pinyin','counting','math','pattern','classify','memory'].includes(module)) {
+  if (!module || !['characters','pinyin','counting','math','pattern','classify','memory','english'].includes(module)) {
     console.error('Invalid module:', module);
     return;
   }
@@ -1317,7 +1420,8 @@ function startQuiz(module) {
     pinyin:'🔤 拼音',
     counting:'🔢 数数',
     pattern:'🧩 找规律',
-    classify:'🗂️ 分类'
+    classify:'🗂️ 分类',
+    english:'🔊 英语'
   };
   quizTitle.textContent = titles[module];
 
@@ -1551,6 +1655,10 @@ function renderQuestion() {
     ).join('');
     qHTML = '<div class="question-emoji" style="font-size:46px;">' + itemsHTML + '</div>' +
             '<div class="question-label">哪个不是「' + q.mainCategory + '」？</div>';
+  } else if (module === 'english') {
+    // 听音选图：题目不显示英文单词，只给喇叭图标 + 提示，逼孩子靠"听"选
+    qHTML = '<div class="question-emoji" style="font-size:64px;">🔊</div>' +
+            '<div class="question-label">听一听，选一选</div>';
   }
 
   questionArea.innerHTML = qHTML;
@@ -1563,10 +1671,15 @@ function renderQuestion() {
 
   let speakText = '';
   currentPinyin = (module === 'pinyin') ? q.pinyin : '';
+  currentEnglish = (module === 'english') ? q.word : '';
   if (module === 'characters') speakText = '这是什么？点下面的字';
   else if (module === 'pinyin') {
     // 拼音题：用预生成的标准女声音频读音节，不再用浏览器朗读（读不准）
     if (!playPinyinAudio(q.pinyin)) speakText = '请选出读音';
+  }
+  else if (module === 'english') {
+    // 英语题：不读中文，直接播放英文单词发音
+    speakEnglish(q.word);
   }
   else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
   else if (module === 'math') speakText = '算一算，' + q.question.replace(/=/g, '等于').replace(/\+/g, '加').replace(/-/g, '减').replace(/\?/g, '');
@@ -1922,6 +2035,7 @@ $('#quizBack').addEventListener('click', () => {
 });
 $('#replayBtn').addEventListener('click', function() {
   if (currentPinyin) { playPinyinAudio(currentPinyin); return; }
+  if (currentEnglish) { speakEnglish(currentEnglish); return; }
   if (currentSpeakText) speak(currentSpeakText);
 });
 $('#resultsBack').addEventListener('click', () => {
