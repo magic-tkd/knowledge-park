@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>幼小衔接知识乐园</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root {
   --coral: #FF6B6B;
@@ -22,14 +25,18 @@
   --radius-sm: 12px;
   --shadow: 0 4px 20px rgba(0,0,0,0.06);
   --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
-  --font: 'PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+  --font: 'ZCOOL KuaiLe','PingFang SC','Microsoft YaHei','Noto Sans SC',sans-serif;
+  --font-num: 'Baloo 2','ZCOOL KuaiLe','PingFang SC',sans-serif;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background:
+    radial-gradient(circle at 18% -5%, #FFE3DE 0%, transparent 42%),
+    radial-gradient(circle at 88% 8%, #D8F5F1 0%, transparent 40%),
+    linear-gradient(180deg, #FFF9F5 0%, #FFF3EE 100%);
   color: var(--text);
   min-height: 100vh;
   min-height: 100dvh;
@@ -39,12 +46,25 @@ body {
   -webkit-user-select: none;
 }
 
+/* 背景柔光装饰：气泡与浮云，固定全屏，不挡操作 */
+.bg-decor { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.bg-decor::before,
+.bg-decor::after { content:''; position:absolute; border-radius:50%; opacity:0.55; }
+.bg-decor::before { width:170px; height:170px; left:-46px; top:16%; background:radial-gradient(circle at 35% 35%, #FFD8D0, #FFE9E4); }
+.bg-decor::after  { width:130px; height:130px; right:-34px; bottom:13%; background:radial-gradient(circle at 35% 35%, #C9F0EB, #E6FAF7); }
+.bg-decor .bubble { position:absolute; border-radius:50%; background:rgba(255,255,255,0.6); }
+.bg-decor .b1 { width:46px; height:46px; left:12%; top:62%; }
+.bg-decor .b2 { width:30px; height:30px; right:18%; top:30%; }
+.bg-decor .b3 { width:22px; height:22px; left:42%; top:13%; }
+
 canvas#confetti {
   position: fixed; top:0; left:0; width:100%; height:100%;
   pointer-events: none; z-index: 9999;
 }
 
 #app {
+  position: relative;
+  z-index: 1;
   max-width: 520px;
   margin: 0 auto;
   padding: 16px 16px 24px;
@@ -72,6 +92,7 @@ header .star-badge {
   background: var(--yellow-pale);
   padding: 8px 16px; border-radius: 50px;
   font-size: 20px; font-weight: 600;
+  font-family: var(--font-num);
 }
 header .star-badge .star-icon {
   font-size: 26px;
@@ -121,35 +142,57 @@ header .star-badge .star-icon {
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-lg);
   transition: transform 0.2s, box-shadow 0.2s;
   border: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+  animation: cardPop 0.5s cubic-bezier(0.22, 1.2, 0.36, 1) both;
 }
-.module-card:active { transform: scale(0.95); }
+.module-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 54%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0));
+  pointer-events: none;
+}
+.module-card:active { transform: scale(0.94); box-shadow: var(--shadow); }
+@keyframes cardPop {
+  0%   { opacity: 0; translate: 0 24px; scale: 0.82; }
+  100% { opacity: 1; translate: 0 0; scale: 1; }
+}
+.home-grid .module-card:nth-child(1) { animation-delay: 0.04s; }
+.home-grid .module-card:nth-child(2) { animation-delay: 0.09s; }
+.home-grid .module-card:nth-child(3) { animation-delay: 0.14s; }
+.home-grid .module-card:nth-child(4) { animation-delay: 0.19s; }
+.home-grid .module-card:nth-child(5) { animation-delay: 0.24s; }
+.home-grid .module-card:nth-child(6) { animation-delay: 0.29s; }
+.home-grid .module-card:nth-child(7) { animation-delay: 0.34s; }
+.home-grid .module-card:nth-child(8) { animation-delay: 0.39s; }
+.home-grid .module-card:nth-child(9) { animation-delay: 0.44s; }
 .module-card .emoji { font-size: 48px; margin-bottom: 8px; }
 .module-card .label { font-size: 22px; font-weight: 600; }
 .module-card .desc {
   font-size: 14px; color: var(--text-light); margin-top: 4px;
 }
 
-.card-characters { border-color: var(--coral); }
+.card-characters { border-color: var(--coral); background: rgba(255,107,107,0.10); }
 .card-characters .label { color: var(--coral); }
-.card-pinyin { border-color: var(--teal); }
+.card-pinyin { border-color: var(--teal); background: rgba(78,205,196,0.12); }
 .card-pinyin .label { color: var(--teal); }
-.card-counting { border-color: #A78BFA; }
+.card-counting { border-color: #A78BFA; background: rgba(167,139,250,0.12); }
 .card-counting .label { color: #A78BFA; }
-.card-math { border-color: #F59E0B; }
+.card-math { border-color: #F59E0B; background: rgba(245,158,11,0.12); }
 .card-math .label { color: #F59E0B; }
-.card-pattern { border-color: #34D399; }
+.card-pattern { border-color: #34D399; background: rgba(52,211,153,0.12); }
 .card-pattern .label { color: #34D399; }
-.card-classify { border-color: #F472B6; }
+.card-classify { border-color: #F472B6; background: rgba(244,114,182,0.12); }
 .card-classify .label { color: #F472B6; }
-.card-memory { border-color: #60A5FA; }
+.card-memory { border-color: #60A5FA; background: rgba(96,165,250,0.12); }
 .card-memory .label { color: #60A5FA; }
-.card-english { border-color: #FBBF24; }
+.card-english { border-color: #FBBF24; background: rgba(251,191,36,0.12); }
 .card-english .label { color: #FBBF24; }
 .card-english .emoji { color: #FBBF24; }
-.card-books { border-color: #FB7185; }
+.card-books { border-color: #FB7185; background: rgba(251,113,133,0.12); }
 .card-books .label { color: #FB7185; }
 .card-books .emoji { color: #FB7185; }
 
@@ -572,6 +615,11 @@ header .star-badge .star-icon {
 <body>
 
 <canvas id="confetti"></canvas>
+<div class="bg-decor" aria-hidden="true">
+  <span class="bubble b1"></span>
+  <span class="bubble b2"></span>
+  <span class="bubble b3"></span>
+</div>
 <div id="feedbackOverlay" class="feedback-overlay hidden">
   <span id="feedbackText" class="feedback-text"></span>
 </div>
