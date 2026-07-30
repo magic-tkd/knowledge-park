@@ -164,6 +164,8 @@ header .star-badge .star-icon {
 .book-card .book-title { font-size: 20px; font-weight: 600; color: #FB7185; margin-top: 6px; }
 .book-card .book-count { font-size: 13px; color: var(--text-light); margin-top: 4px; }
 .book-card .book-done { position: absolute; top: 8px; right: 10px; font-size: 18px; }
+.book-cat-back { display: inline-block; font-size: 17px; color: var(--text-light); background: var(--white); border: 2px solid #e5e7eb; border-radius: 30px; padding: 8px 18px; margin-bottom: 14px; cursor: pointer; }
+.book-cat-back:active { transform: scale(0.96); }
 .reader-container { padding: 16px; max-width: 720px; margin: 0 auto; }
 .reader-page { text-align: center; padding: 30px 10px; min-height: 44vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .reader-emoji { font-size: 140px; line-height: 1; margin-bottom: 18px; }
@@ -2186,43 +2188,59 @@ adminOverlay.addEventListener('click', function(e) {
 
 let currentBook = null;
 let bookPageIndex = 0;
+let bookCategory = null;  // null=大类选择; 'words'/'sentences'=某个大类下的书列表
 
 function startBooks() {
+  bookCategory = null;  // 每次进绘本都从大类开始
   renderBookShelf();
   showView(viewBooks);
 }
 
 function renderBookShelf() {
   booksShelf.innerHTML = '';
-  const words = BOOK_SHELF.filter(function(b){ return b.type !== 'sentences'; });
-  const sentences = BOOK_SHELF.filter(function(b){ return b.type === 'sentences'; });
-  function makeGroup(title, list) {
-    const group = document.createElement('div');
-    group.className = 'book-group';
-    const heading = document.createElement('div');
-    heading.className = 'book-group-title';
-    heading.textContent = title;
-    group.appendChild(heading);
-    const grid = document.createElement('div');
-    grid.className = 'book-group-grid';
-    list.forEach(function(book) {
-      const done = appData.booksFinished[book.id];
-      const count = book.type === 'sentences' ? (book.pages.length + ' 句') : (book.words.length + ' 个词');
+
+  // 第一级：大类选择（常见单词 / 常见语句）
+  if (!bookCategory) {
+    const cats = [
+      { key:'words', emoji:'🔤', title:'常见单词', desc:'动物 · 果蔬 · 颜色 · 数字…' },
+      { key:'sentences', emoji:'💬', title:'常见语句', desc:'日常生活 · 口语句子' }
+    ];
+    cats.forEach(function(c) {
       const card = document.createElement('div');
-      card.className = 'book-card';
-      card.dataset.book = book.id;
+      card.className = 'book-card book-cat';
+      card.dataset.cat = c.key;
       card.innerHTML =
-        (done ? '<div class="book-done">✅</div>' : '') +
-        '<div class="book-emoji">' + book.emoji + '</div>' +
-        '<div class="book-title">' + book.title + '</div>' +
-        '<div class="book-count">' + count + '</div>';
-      grid.appendChild(card);
+        '<div class="book-emoji">' + c.emoji + '</div>' +
+        '<div class="book-title">' + c.title + '</div>' +
+        '<div class="book-count">' + c.desc + '</div>';
+      booksShelf.appendChild(card);
     });
-    group.appendChild(grid);
-    return group;
+    return;
   }
-  if (words.length) booksShelf.appendChild(makeGroup('常见单词', words));
-  if (sentences.length) booksShelf.appendChild(makeGroup('常见语句', sentences));
+
+  // 第二级：返回分类 + 该大类下的书列表
+  const backRow = document.createElement('div');
+  backRow.className = 'book-cat-back';
+  backRow.dataset.catBack = '1';
+  backRow.textContent = '← 返回分类';
+  booksShelf.appendChild(backRow);
+
+  const list = BOOK_SHELF.filter(function(b) {
+    return bookCategory === 'sentences' ? b.type === 'sentences' : b.type !== 'sentences';
+  });
+  list.forEach(function(book) {
+    const done = appData.booksFinished[book.id];
+    const count = book.type === 'sentences' ? (book.pages.length + ' 句') : (book.words.length + ' 个词');
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    card.dataset.book = book.id;
+    card.innerHTML =
+      (done ? '<div class="book-done">✅</div>' : '') +
+      '<div class="book-emoji">' + book.emoji + '</div>' +
+      '<div class="book-title">' + book.title + '</div>' +
+      '<div class="book-count">' + count + '</div>';
+    booksShelf.appendChild(card);
+  });
 }
 
 function openBook(bookId) {
@@ -2302,6 +2320,10 @@ function readerGo(delta) {
 }
 
 booksShelf.addEventListener('click', function(e) {
+  const cat = e.target.closest('.book-cat');
+  if (cat) { bookCategory = cat.dataset.cat; renderBookShelf(); return; }
+  const back = e.target.closest('.book-cat-back');
+  if (back) { bookCategory = null; renderBookShelf(); return; }
   const card = e.target.closest('.book-card');
   if (!card) return;
   openBook(card.dataset.book);
