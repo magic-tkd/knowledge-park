@@ -166,6 +166,7 @@ header .star-badge .star-icon {
 .reader-page { text-align: center; padding: 30px 10px; min-height: 44vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .reader-emoji { font-size: 140px; line-height: 1; margin-bottom: 18px; }
 .reader-word { font-size: 40px; font-weight: 700; color: var(--text); letter-spacing: 1px; margin-bottom: 22px; }
+.reader-sentence { font-size: 34px; font-weight: 700; color: var(--text); letter-spacing: 0.5px; line-height: 1.4; margin-bottom: 22px; max-width: 92%; text-align: center; }
 .reader-listen { font-size: 22px; padding: 14px 30px; border: none; border-radius: 40px; background: #FB7185; color: #fff; cursor: pointer; box-shadow: var(--shadow); }
 .reader-listen:active { transform: scale(0.96); }
 .reader-counter { margin-top: 22px; font-size: 16px; color: var(--text-light); }
@@ -857,7 +858,25 @@ const BOOK_SHELF = [
   { id:'family',    title:'家人', emoji:'👪', words:['mom','dad','baby','grandma','grandpa','brother','sister'] },
   { id:'body',      title:'身体', emoji:'🧍', words:['eye','ear','nose','mouth','hand','foot'] },
   { id:'toys',      title:'玩具', emoji:'🧸', words:['ball','doll','teddy','balloon','kite','robot'] },
-  { id:'transport', title:'交通', emoji:'🚗', words:['car','bus','train','bike','boat','plane','rocket'] }
+  { id:'transport', title:'交通', emoji:'🚗', words:['car','bus','train','bike','boat','plane','rocket'] },
+  // 绘本 · 模式B（原创日常场景句，零版权，edge-tts 生成音频）：第一本 Daily Routine
+  { id:'daily-routine', title:'日常生活', emoji:'🌞', type:'sentences', audioDir:'daily-routine', pages:[
+    { text:'Wake up, little one.', emoji:'🌅', audio:'page01' },
+    { text:'It is a new day.', emoji:'☀️', audio:'page02' },
+    { text:'Stretch your arms.', emoji:'🙆', audio:'page03' },
+    { text:'Let us get up.', emoji:'🛏️', audio:'page04' },
+    { text:'Wash your hands.', emoji:'💧', audio:'page05' },
+    { text:'Time to eat.', emoji:'🍽️', audio:'page06' },
+    { text:'Use your spoon.', emoji:'🥄', audio:'page07' },
+    { text:'Chew slowly.', emoji:'😋', audio:'page08' },
+    { text:'Yummy!', emoji:'👍', audio:'page09' },
+    { text:'All done.', emoji:'🎉', audio:'page10' },
+    { text:'Take a bath.', emoji:'🛁', audio:'page11' },
+    { text:'Put on your pajamas.', emoji:'👕', audio:'page12' },
+    { text:'Hug your bear.', emoji:'🧸', audio:'page13' },
+    { text:'Good night.', emoji:'🌙', audio:'page14' },
+    { text:'Sweet dreams.', emoji:'💤', audio:'page15' }
+  ] }
 ];
 // 单词 → 代表 emoji（取自英语题库的 correct 字段，单一数据源）
 const wordEmoji = {};
@@ -1212,6 +1231,17 @@ function playEnglishAudio(word) {
     const a = new Audio('audio/en/' + String(word).toLowerCase() + '.mp3');
     const p = a.play();
     if (p && p.catch) p.catch(function(){});  // iOS 无手势时可能拒播，忽略，重读按钮可补救
+    return true;
+  } catch(e) { return false; }
+}
+
+// 绘本句子音频：播放 audio/books/<file>.mp3（<file> 含子目录，如 daily-routine/page01）
+function playBookAudio(file) {
+  if (!file) return false;
+  try {
+    const a = new Audio('audio/books/' + String(file) + '.mp3');
+    const p = a.play();
+    if (p && p.catch) p.catch(function(){});
     return true;
   } catch(e) { return false; }
 }
@@ -2171,7 +2201,7 @@ function renderBookShelf() {
       (done ? '<div class="book-done">✅</div>' : '') +
       '<div class="book-emoji">' + book.emoji + '</div>' +
       '<div class="book-title">' + book.title + '</div>' +
-      '<div class="book-count">' + book.words.length + ' 个词</div>';
+      '<div class="book-count">' + (book.type === 'sentences' ? (book.pages.length + ' 句') : (book.words.length + ' 个词')) + '</div>';
     booksShelf.appendChild(card);
   });
 }
@@ -2188,21 +2218,34 @@ function openBook(bookId) {
 
 function renderReaderPage() {
   if (!currentBook) return;
-  const total = currentBook.words.length;
+  const isSentence = currentBook.type === 'sentences';
+  const total = isSentence ? currentBook.pages.length : currentBook.words.length;
   if (bookPageIndex >= total) { renderReaderFinish(); return; }
-  const word = currentBook.words[bookPageIndex];
-  const emoji = wordEmoji[word] || '🔤';
+  let emoji, contentHtml, audioAttr, autoPlay;
+  if (isSentence) {
+    const pg = currentBook.pages[bookPageIndex];
+    emoji = pg.emoji;
+    contentHtml = '<div class="reader-sentence">' + pg.text + '</div>';
+    audioAttr = 'data-audio="' + currentBook.audioDir + '/' + pg.audio + '"';
+    autoPlay = function(){ playBookAudio(currentBook.audioDir + '/' + pg.audio); };
+  } else {
+    const word = currentBook.words[bookPageIndex];
+    emoji = wordEmoji[word] || '🔤';
+    contentHtml = '<div class="reader-word">' + word + '</div>';
+    audioAttr = 'data-word="' + word + '"';
+    autoPlay = function(){ playEnglishAudio(word); };
+  }
   readerPage.innerHTML =
     '<div class="reader-emoji">' + emoji + '</div>' +
-    '<div class="reader-word">' + word + '</div>' +
-    '<button class="reader-listen" data-word="' + word + '">🔊 听一听</button>' +
+    contentHtml +
+    '<button class="reader-listen" ' + audioAttr + '>🔊 听一听</button>' +
     '<div class="reader-counter">' + (bookPageIndex + 1) + ' / ' + total + '</div>';
   readerProgress.style.width = Math.round(bookPageIndex / total * 100) + '%';
   readerPrev.disabled = (bookPageIndex === 0);
   readerNext.disabled = false;
   readerNext.textContent = (bookPageIndex === total - 1) ? '读完啦 🎉' : '下一页 →';
-  // 翻到新页自动播放当前词（在点击手势链内，允许自动播放）
-  if (appData.soundEnabled) playEnglishAudio(word);
+  // 翻到新页自动播放（在点击手势链内，允许自动播放）
+  if (appData.soundEnabled) autoPlay();
 }
 
 function renderReaderFinish() {
@@ -2227,7 +2270,7 @@ function renderReaderFinish() {
 
 function readerGo(delta) {
   if (!currentBook) return;
-  const total = currentBook.words.length;
+  const total = currentBook.type === 'sentences' ? currentBook.pages.length : currentBook.words.length;
   if (delta > 0) {
     if (bookPageIndex >= total) return;            // 已在完成页
     if (bookPageIndex === total - 1) { bookPageIndex = total; renderReaderPage(); return; }
@@ -2249,11 +2292,21 @@ readerBack.addEventListener('click', function() { currentBook = null; showView(v
 readerPrev.addEventListener('click', function() { readerGo(-1); });
 readerNext.addEventListener('click', function() { readerGo(1); });
 readerReplay.addEventListener('click', function() {
-  if (currentBook && bookPageIndex < currentBook.words.length) playEnglishAudio(currentBook.words[bookPageIndex]);
+  if (!currentBook) return;
+  if (currentBook.type === 'sentences') {
+    const pg = currentBook.pages[bookPageIndex];
+    if (pg) playBookAudio(currentBook.audioDir + '/' + pg.audio);
+  } else if (bookPageIndex < currentBook.words.length) {
+    playEnglishAudio(currentBook.words[bookPageIndex]);
+  }
 });
 readerPage.addEventListener('click', function(e) {
   const listen = e.target.closest('.reader-listen');
-  if (listen) { playEnglishAudio(listen.dataset.word); return; }
+  if (listen) {
+    if (listen.dataset.audio) playBookAudio(listen.dataset.audio);
+    else if (listen.dataset.word) playEnglishAudio(listen.dataset.word);
+    return;
+  }
   const fin = e.target.closest('#readerFinishBtn');
   if (fin) { currentBook = null; showView(viewBooks); }
 });
