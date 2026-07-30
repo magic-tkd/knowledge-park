@@ -155,7 +155,9 @@ header .star-badge .star-icon {
 
 /* ---- 绘本（单词书 · 模式A） ---- */
 .books-container { padding: 16px; max-width: 720px; margin: 0 auto; }
-.books-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; margin-top: 12px; }
+.books-shelf { display: flex; flex-direction: column; gap: 24px; margin-top: 12px; }
+.book-group-title { font-size: 22px; font-weight: 700; color: var(--text); padding-left: 4px; margin-bottom: 2px; }
+.book-group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 16px; }
 .book-card { background: var(--white); border: 3px solid #FB7185; border-radius: var(--radius); padding: 20px 12px; text-align: center; cursor: pointer; box-shadow: var(--shadow); transition: transform .2s; position: relative; }
 .book-card:active { transform: scale(0.95); }
 .book-card .book-emoji { font-size: 44px; }
@@ -2192,18 +2194,35 @@ function startBooks() {
 
 function renderBookShelf() {
   booksShelf.innerHTML = '';
-  BOOK_SHELF.forEach(function(book) {
-    const done = appData.booksFinished[book.id];
-    const card = document.createElement('div');
-    card.className = 'book-card';
-    card.dataset.book = book.id;
-    card.innerHTML =
-      (done ? '<div class="book-done">✅</div>' : '') +
-      '<div class="book-emoji">' + book.emoji + '</div>' +
-      '<div class="book-title">' + book.title + '</div>' +
-      '<div class="book-count">' + (book.type === 'sentences' ? (book.pages.length + ' 句') : (book.words.length + ' 个词')) + '</div>';
-    booksShelf.appendChild(card);
-  });
+  const words = BOOK_SHELF.filter(function(b){ return b.type !== 'sentences'; });
+  const sentences = BOOK_SHELF.filter(function(b){ return b.type === 'sentences'; });
+  function makeGroup(title, list) {
+    const group = document.createElement('div');
+    group.className = 'book-group';
+    const heading = document.createElement('div');
+    heading.className = 'book-group-title';
+    heading.textContent = title;
+    group.appendChild(heading);
+    const grid = document.createElement('div');
+    grid.className = 'book-group-grid';
+    list.forEach(function(book) {
+      const done = appData.booksFinished[book.id];
+      const count = book.type === 'sentences' ? (book.pages.length + ' 句') : (book.words.length + ' 个词');
+      const card = document.createElement('div');
+      card.className = 'book-card';
+      card.dataset.book = book.id;
+      card.innerHTML =
+        (done ? '<div class="book-done">✅</div>' : '') +
+        '<div class="book-emoji">' + book.emoji + '</div>' +
+        '<div class="book-title">' + book.title + '</div>' +
+        '<div class="book-count">' + count + '</div>';
+      grid.appendChild(card);
+    });
+    group.appendChild(grid);
+    return group;
+  }
+  if (words.length) booksShelf.appendChild(makeGroup('常见单词', words));
+  if (sentences.length) booksShelf.appendChild(makeGroup('常见语句', sentences));
 }
 
 function openBook(bookId) {
