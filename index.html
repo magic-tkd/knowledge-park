@@ -169,6 +169,7 @@ header .star-badge .star-icon {
 .home-grid .module-card:nth-child(7) { animation-delay: 0.34s; }
 .home-grid .module-card:nth-child(8) { animation-delay: 0.39s; }
 .home-grid .module-card:nth-child(9) { animation-delay: 0.44s; }
+.home-grid .module-card:nth-child(10) { animation-delay: 0.49s; }
 .module-card .emoji { font-size: 48px; margin-bottom: 8px; }
 .module-card .label { font-size: 22px; font-weight: 600; }
 .module-card .desc {
@@ -195,6 +196,10 @@ header .star-badge .star-icon {
 .card-books { border-color: #FB7185; background: rgba(251,113,133,0.12); }
 .card-books .label { color: #FB7185; }
 .card-books .emoji { color: #FB7185; }
+.card-clock { border-color: #38BDF8; background: rgba(56,189,248,0.12); }
+.card-clock .label { color: #38BDF8; }
+.card-clock .emoji { color: #38BDF8; }
+.clock-svg { display: block; margin: 4px auto 10px; max-width: 220px; width: 60%; height: auto; }
 
 /* ---- 绘本（单词书 · 模式A） ---- */
 .books-container { padding: 16px; max-width: 720px; margin: 0 auto; }
@@ -680,6 +685,11 @@ header .star-badge .star-icon {
       <div class="emoji">📚</div>
       <div class="label">绘本</div>
       <div class="desc">听故事，看图画</div>
+    </div>
+    <div class="module-card card-clock" data-module="clock">
+      <div class="emoji">🕐</div>
+      <div class="label">钟表</div>
+      <div class="desc">认识整点和半点</div>
     </div>
   </div>
 
@@ -1264,6 +1274,7 @@ const pinyinAudioMap = {
 };
 let currentPinyin = '';
 let currentEnglish = '';
+let currentClock = null;
 function playPinyinAudio(pinyin) {
   const file = pinyinAudioMap[pinyin];
   if (!file) return false;
@@ -1579,8 +1590,71 @@ function generateClassificationQuestions() {
   return questions;
 }
 
+/* ========== CLOCK (认识钟表) ========== */
+
+function timeToChinese(hour, minute) {
+  const h = ((hour % 12) === 0) ? 12 : (hour % 12);
+  if (minute === 0) return h + '点整';
+  if (minute === 30) return h + '点半';
+  return h + '点' + minute + '分';
+}
+
+function drawClockSVG(hour, minute) {
+  const cx = 100, cy = 100, r = 90;
+  let ticks = '';
+  for (let i = 1; i <= 12; i++) {
+    const ang = (i * 30 - 90) * Math.PI / 180;
+    const x1 = (cx + r * Math.cos(ang)).toFixed(1);
+    const y1 = (cy + r * Math.sin(ang)).toFixed(1);
+    const x2 = (cx + (r - 12) * Math.cos(ang)).toFixed(1);
+    const y2 = (cy + (r - 12) * Math.sin(ang)).toFixed(1);
+    ticks += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="#cbd5e1" stroke-width="2"/>';
+  }
+  let nums = '';
+  for (let i = 1; i <= 12; i++) {
+    const ang = (i * 30 - 90) * Math.PI / 180;
+    const nx = (cx + (r - 26) * Math.cos(ang)).toFixed(1);
+    const ny = (cy + (r - 26) * Math.sin(ang) + 5).toFixed(1);
+    nums += '<text x="' + nx + '" y="' + ny + '" text-anchor="middle" font-size="14" fill="#555">' + i + '</text>';
+  }
+  const hourAng = ((hour % 12) * 30 + minute * 0.5 - 90) * Math.PI / 180;
+  const minAng = (minute * 6 - 90) * Math.PI / 180;
+  const hx = (cx + 46 * Math.cos(hourAng)).toFixed(1);
+  const hy = (cy + 46 * Math.sin(hourAng)).toFixed(1);
+  const mx = (cx + 70 * Math.cos(minAng)).toFixed(1);
+  const my = (cy + 70 * Math.sin(minAng)).toFixed(1);
+  return '<svg width="200" height="200" viewBox="0 0 200 200" class="clock-svg">' +
+    '<circle cx="100" cy="100" r="93" fill="#fff" stroke="#FF6B6B" stroke-width="5"/>' +
+    ticks + nums +
+    '<line x1="100" y1="100" x2="' + hx + '" y2="' + hy + '" stroke="#333" stroke-width="6" stroke-linecap="round"/>' +
+    '<line x1="100" y1="100" x2="' + mx + '" y2="' + my + '" stroke="#4ECDC4" stroke-width="4" stroke-linecap="round"/>' +
+    '<circle cx="100" cy="100" r="6" fill="#333"/>' +
+    '</svg>';
+}
+
+function generateClockQuestions() {
+  const questions = [];
+  for (let i = 0; i < 10; i++) {
+    const isHalf = Math.random() < 0.5;
+    const hour = 1 + Math.floor(Math.random() * 12);
+    const minute = isHalf ? 30 : 0;
+    const correct = hour + (minute === 0 ? ':00' : ':30');
+    const opts = new Set([correct]);
+    let safety = 0;
+    while (opts.size < 4 && safety < 100) {
+      safety++;
+      const h2 = 1 + Math.floor(Math.random() * 12);
+      const m2 = Math.random() < 0.5 ? 0 : 30;
+      opts.add(h2 + (m2 === 0 ? ':00' : ':30'));
+    }
+    const options = shuffle(Array.from(opts));
+    questions.push({ hour, minute, options, correct });
+  }
+  return questions;
+}
+
 function startQuiz(module) {
-  if (!module || !['characters','pinyin','counting','math','pattern','classify','memory','english'].includes(module)) {
+  if (!module || !['characters','pinyin','counting','math','pattern','classify','memory','english','clock'].includes(module)) {
     console.error('Invalid module:', module);
     return;
   }
@@ -1603,7 +1677,8 @@ function startQuiz(module) {
     counting:'🔢 数数',
     pattern:'🧩 找规律',
     classify:'🗂️ 分类',
-    english:'🔊 英语'
+    english:'🔊 英语',
+    clock:'🕐 认识钟表'
   };
   quizTitle.textContent = titles[module];
 
@@ -1614,6 +1689,8 @@ function startQuiz(module) {
     questions = generatePatternQuestions();
   } else if (module === 'classify') {
     questions = generateClassificationQuestions();
+  } else if (module === 'clock') {
+    questions = generateClockQuestions();
   } else {
     const bank = appData.quizBank[module];
     const picked = shuffle(bank).slice(0, 10);
@@ -1841,6 +1918,9 @@ function renderQuestion() {
     // 听音选图：题目不显示英文单词，只给喇叭图标 + 提示，逼孩子靠"听"选
     qHTML = '<div class="question-emoji" style="font-size:64px;">🔊</div>' +
             '<div class="question-label">听一听，选一选</div>';
+  } else if (module === 'clock') {
+    qHTML = drawClockSVG(q.hour, q.minute) +
+            '<div class="question-label">这是几点？选一选</div>';
   }
 
   questionArea.innerHTML = qHTML;
@@ -1854,6 +1934,7 @@ function renderQuestion() {
   let speakText = '';
   currentPinyin = (module === 'pinyin') ? q.pinyin : '';
   currentEnglish = (module === 'english') ? q.word : '';
+  currentClock = (module === 'clock') ? { hour: q.hour, minute: q.minute } : null;
   if (module === 'characters') speakText = '这是什么？点下面的字';
   else if (module === 'pinyin') {
     // 拼音题：用预生成的标准女声音频读音节，不再用浏览器朗读（读不准）
@@ -1862,6 +1943,10 @@ function renderQuestion() {
   else if (module === 'english') {
     // 英语题：优先播放预生成的标准英文单词音频，缺失才回退浏览器朗读
     if (!playEnglishAudio(q.word)) speakEnglish(q.word);
+  }
+  else if (module === 'clock') {
+    // 钟表题：用浏览器中文语音报时（中文数字浏览器读得准）
+    speakText = timeToChinese(q.hour, q.minute);
   }
   else if (module === 'counting') speakText = (q.type === 'compare') ? q.question : '数一数，一共有几个？';
   else if (module === 'math') speakText = '算一算，' + q.question.replace(/=/g, '等于').replace(/\+/g, '加').replace(/-/g, '减').replace(/\?/g, '');
@@ -2200,7 +2285,7 @@ optionsGrid.addEventListener('click', function(e) {
     return;
   }
   const optTxt = btn.textContent.trim();
-  if (/[\u4e00-\u9fa50-9]/.test(optTxt)) speak(optTxt);
+  if (/[\u4e00-\u9fa50-9]/.test(optTxt) && (!quizState || quizState.module !== 'clock')) speak(optTxt);
   handleAnswer(btn);
 });
 
@@ -2219,6 +2304,7 @@ $('#quizBack').addEventListener('click', () => {
 $('#replayBtn').addEventListener('click', function() {
   if (currentPinyin) { playPinyinAudio(currentPinyin); return; }
   if (currentEnglish) { if (!playEnglishAudio(currentEnglish)) speakEnglish(currentEnglish); return; }
+  if (currentClock) { speak(timeToChinese(currentClock.hour, currentClock.minute)); return; }
   if (currentSpeakText) speak(currentSpeakText);
 });
 $('#resultsBack').addEventListener('click', () => {
