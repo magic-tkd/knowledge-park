@@ -200,6 +200,11 @@ header .star-badge .star-icon {
 .card-clock .label { color: #38BDF8; }
 .card-clock .emoji { color: #38BDF8; }
 .clock-svg { display: block; margin: 4px auto 10px; max-width: 220px; width: 60%; height: auto; }
+.clock-svg-drag { touch-action: none; cursor: grab; max-width: 240px; width: 70%; }
+.clock-svg-drag:active { cursor: grabbing; }
+.clock-target { text-align: center; font-size: 26px; font-weight: 700; color: var(--text); margin: 6px 0 2px; }
+.clock-target b { color: #38BDF8; }
+.clock-drag-hint { text-align: center; font-size: 15px; color: #999; margin-bottom: 6px; }
 
 /* ---- 绘本（单词书 · 模式A） ---- */
 .books-container { padding: 16px; max-width: 720px; margin: 0 auto; }
@@ -1596,6 +1601,8 @@ function timeToChinese(hour, minute) {
   const h = ((hour % 12) === 0) ? 12 : (hour % 12);
   if (minute === 0) return h + '点整';
   if (minute === 30) return h + '点半';
+  if (minute === 15) return h + '点一刻';
+  if (minute === 45) return h + '点三刻';
   return h + '点' + minute + '分';
 }
 
@@ -1632,25 +1639,227 @@ function drawClockSVG(hour, minute) {
     '</svg>';
 }
 
-function generateClockQuestions() {
+function generateClockQuestions(advanced) {
   const questions = [];
+  const fmt = function(h, m) { return h + ':' + String(m).padStart(2, '0'); };
   for (let i = 0; i < 10; i++) {
-    const isHalf = Math.random() < 0.5;
     const hour = 1 + Math.floor(Math.random() * 12);
-    const minute = isHalf ? 30 : 0;
-    const correct = hour + (minute === 0 ? ':00' : ':30');
+    let minute;
+    if (advanced) {
+      minute = 5 * Math.floor(Math.random() * 12); // 任意5分钟：0,5,...,55
+    } else {
+      minute = Math.random() < 0.5 ? 0 : 30;
+    }
+    const correct = fmt(hour, minute);
     const opts = new Set([correct]);
     let safety = 0;
     while (opts.size < 4 && safety < 100) {
       safety++;
       const h2 = 1 + Math.floor(Math.random() * 12);
-      const m2 = Math.random() < 0.5 ? 0 : 30;
-      opts.add(h2 + (m2 === 0 ? ':00' : ':30'));
+      const m2 = advanced ? (5 * Math.floor(Math.random() * 12)) : (Math.random() < 0.5 ? 0 : 30);
+      opts.add(fmt(h2, m2));
     }
     const options = shuffle(Array.from(opts));
     questions.push({ hour, minute, options, correct });
   }
   return questions;
+}
+
+/* ========== CLOCK 玩法选择 / 拨动指针 ========== */
+
+let clockDragState = null;
+
+function showClockModePicker() {
+  quizTitle.textContent = '🕐 认识钟表';
+  progressFill.style.width = '0%';
+  questionArea.innerHTML =
+    '<div class="question-emoji" style="font-size:64px;">🕐</div>' +
+    '<div class="question-label">选一种玩法</div>';
+  optionsGrid.innerHTML =
+    '<button class="option-btn" data-clock="easy">🔹 整点·半点（四选一）</button>' +
+    '<button class="option-btn" data-clock="hard">🔹 任意分钟（四选一）</button>' +
+    '<button class="option-btn" data-clock="drag">✋ 拨动指针（拖动练习）</button>';
+  quizState = null;
+  showView(viewQuiz);
+}
+
+function handleClockMode(mode) {
+  if (mode === 'easy') startClockQuiz(false);
+  else if (mode === 'hard') startClockQuiz(true);
+  else if (mode === 'drag') startClockDrag();
+}
+
+function startClockQuiz(advanced) {
+  stopConfetti();
+  quizTitle.textContent = advanced ? '🕐 任意分钟' : '🕐 整点·半点';
+  const questions = generateClockQuestions(advanced);
+  quizState = {
+    module: 'clock',
+    questions,
+    currentIndex: 0,
+    score: 0,
+    answered: false,
+    firstTry: true,
+    wrongAttempts: 0,
+    advanced: advanced
+  };
+  showView(viewQuiz);
+  renderQuestion();
+}
+
+function startClockDrag() {
+  stopConfetti();
+  if (replayBtn) replayBtn.style.display = 'none';
+  currentClock = null;
+  currentSpeakText = '';
+  quizTitle.textContent = '🕐 拨动指针';
+  clockDragState = { round: 0, total: 6, score: 0, setHour: 12, setMinute: 0, target: null, attempts: 0, answered: false, activeHand: null };
+  showView(viewQuiz);
+  nextClockDragRound();
+}
+
+function nextClockDragRound() {
+  if (!clockDragState) return;
+  if (clockDragState.round >= clockDragState.total) {
+    quizState = { module: 'clock', questions: new Array(clockDragState.total).fill(null), currentIndex: 0, score: clockDragState.score, answered: false, firstTry: true, wrongAttempts: 0 };
+    showResults();
+    return;
+  }
+  const hour = 1 + Math.floor(Math.random() * 12);
+  const minute = 5 * Math.floor(Math.random() * 12); // 0..55，5分钟一档
+  clockDragState.target = { hour, minute };
+  clockDragState.setHour = hour;
+  clockDragState.setMinute = 0;
+  clockDragState.attempts = 0;
+  clockDragState.answered = false;
+  clockDragState.round++;
+  renderClockDrag();
+  if (appData.soundEnabled) speak(timeToChinese(hour, minute));
+}
+
+function renderClockDrag() {
+  const t = clockDragState.target;
+  questionArea.innerHTML =
+    '<div class="clock-target">请拨出：🕐 <b>' + t.hour + ':' + String(t.minute).padStart(2, '0') + '</b></div>' +
+    '<div class="clock-drag-hint">拖动时针和分针，对准时间</div>' +
+    drawClockDragSVG();
+  optionsGrid.innerHTML =
+    '<button class="option-btn" id="clockSpeakBtn" data-clock-act>🔊 听一听</button>' +
+    '<button class="option-btn" id="clockConfirmBtn" data-clock-act>✅ 确认</button>';
+  const svg = questionArea.querySelector('#clockDragSvg');
+  wireClockDrag(svg);
+  document.getElementById('clockSpeakBtn').addEventListener('click', function () {
+    speak(timeToChinese(clockDragState.target.hour, clockDragState.target.minute));
+  });
+  document.getElementById('clockConfirmBtn').addEventListener('click', clockConfirm);
+  updateClockDragHands(svg);
+}
+
+function drawClockDragSVG() {
+  const cx = 100, cy = 100, r = 90;
+  let ticks = '';
+  for (let i = 1; i <= 12; i++) {
+    const ang = (i * 30 - 90) * Math.PI / 180;
+    ticks += '<line x1="' + (cx + r * Math.cos(ang)).toFixed(1) + '" y1="' + (cy + r * Math.sin(ang)).toFixed(1) +
+             '" x2="' + (cx + (r - 12) * Math.cos(ang)).toFixed(1) + '" y2="' + (cy + (r - 12) * Math.sin(ang)).toFixed(1) +
+             '" stroke="#cbd5e1" stroke-width="2"/>';
+  }
+  let nums = '';
+  for (let i = 1; i <= 12; i++) {
+    const ang = (i * 30 - 90) * Math.PI / 180;
+    nums += '<text x="' + (cx + (r - 26) * Math.cos(ang)).toFixed(1) + '" y="' + (cy + (r - 26) * Math.sin(ang) + 5).toFixed(1) +
+            '" text-anchor="middle" font-size="14" fill="#555">' + i + '</text>';
+  }
+  return '<svg id="clockDragSvg" width="200" height="200" viewBox="0 0 200 200" class="clock-svg clock-svg-drag">' +
+    '<circle cx="100" cy="100" r="93" fill="#fff" stroke="#FF6B6B" stroke-width="5"/>' +
+    ticks + nums +
+    '<line id="hourHand" x1="100" y1="100" x2="100" y2="60" stroke="#333" stroke-width="6" stroke-linecap="round"/>' +
+    '<line id="minHand" x1="100" y1="100" x2="100" y2="35" stroke="#4ECDC4" stroke-width="4" stroke-linecap="round"/>' +
+    '<circle id="hourTip" cx="100" cy="60" r="8" fill="#333"/>' +
+    '<circle id="minTip" cx="100" cy="35" r="7" fill="#4ECDC4"/>' +
+    '<circle cx="100" cy="100" r="6" fill="#333"/>' +
+    '</svg>';
+}
+
+function updateClockDragHands(svg) {
+  const H = clockDragState.setHour, M = clockDragState.setMinute;
+  const hourAng = (H % 12 * 30 - 90) * Math.PI / 180;
+  const minAng = (M * 6 - 90) * Math.PI / 180;
+  const hx = (100 + 46 * Math.cos(hourAng)).toFixed(1), hy = (100 + 46 * Math.sin(hourAng)).toFixed(1);
+  const mx = (100 + 70 * Math.cos(minAng)).toFixed(1), my = (100 + 70 * Math.sin(minAng)).toFixed(1);
+  svg.querySelector('#hourHand').setAttribute('x2', hx); svg.querySelector('#hourHand').setAttribute('y2', hy);
+  svg.querySelector('#minHand').setAttribute('x2', mx); svg.querySelector('#minHand').setAttribute('y2', my);
+  svg.querySelector('#hourTip').setAttribute('cx', hx); svg.querySelector('#hourTip').setAttribute('cy', hy);
+  svg.querySelector('#minTip').setAttribute('cx', mx); svg.querySelector('#minTip').setAttribute('cy', my);
+}
+
+function wireClockDrag(svg) {
+  function angleFromEvent(e) {
+    const rect = svg.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (200 / rect.width) - 100;
+    const y = (e.clientY - rect.top) * (200 / rect.height) - 100;
+    let ang = Math.atan2(y, x) * 180 / Math.PI + 90;
+    return ((ang % 360) + 360) % 360;
+  }
+  function applyAngle(ang) {
+    if (clockDragState.activeHand === 'min') {
+      clockDragState.setMinute = Math.round(ang / 30) * 5 % 60;
+    } else {
+      let h = Math.round(ang / 30) % 12;
+      if (h === 0) h = 12;
+      clockDragState.setHour = h;
+    }
+    updateClockDragHands(svg);
+  }
+  svg.addEventListener('pointerdown', function (e) {
+    if (clockDragState.answered) return;
+    const rect = svg.getBoundingClientRect();
+    const px = (e.clientX - rect.left) * (200 / rect.width) - 100;
+    const py = (e.clientY - rect.top) * (200 / rect.height) - 100;
+    const ha = (clockDragState.setHour % 12 * 30 - 90) * Math.PI / 180;
+    const ma = (clockDragState.setMinute * 6 - 90) * Math.PI / 180;
+    const hTip = { x: 100 + 46 * Math.cos(ha), y: 100 + 46 * Math.sin(ha) };
+    const mTip = { x: 100 + 70 * Math.cos(ma), y: 100 + 70 * Math.sin(ma) };
+    const dH = Math.hypot(px - hTip.x, py - hTip.y);
+    const dM = Math.hypot(px - mTip.x, py - mTip.y);
+    clockDragState.activeHand = dM <= dH ? 'min' : 'hour';
+    applyAngle(angleFromEvent(e));
+    try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+    e.preventDefault();
+  });
+  svg.addEventListener('pointermove', function (e) {
+    if (!clockDragState.activeHand || clockDragState.answered) return;
+    applyAngle(angleFromEvent(e));
+  });
+  svg.addEventListener('pointerup', function () { clockDragState.activeHand = null; });
+  svg.addEventListener('pointercancel', function () { clockDragState.activeHand = null; });
+}
+
+function clockConfirm() {
+  if (!clockDragState || clockDragState.answered) return;
+  const setH = ((clockDragState.setHour % 12) === 0) ? 12 : clockDragState.setHour;
+  const t = clockDragState.target;
+  const btn = document.getElementById('clockConfirmBtn');
+  if (setH === t.hour && clockDragState.setMinute === t.minute) {
+    clockDragState.answered = true;
+    clockDragState.score++;
+    appData.stars++;
+    saveData(appData);
+    refreshHeader();
+    spawnConfetti();
+    onCorrectAnswer(btn, true);
+    setTimeout(nextClockDragRound, 1500);
+  } else {
+    clockDragState.attempts++;
+    const isFinal = clockDragState.attempts >= 3;
+    onWrongAnswer(null, isFinal);
+    if (isFinal) {
+      clockDragState.setHour = t.hour;
+      clockDragState.setMinute = t.minute;
+      updateClockDragHands(questionArea.querySelector('#clockDragSvg'));
+      setTimeout(nextClockDragRound, 2000);
+    }
+  }
 }
 
 function startQuiz(module) {
@@ -1668,6 +1877,11 @@ function startQuiz(module) {
 
   if (module === 'memory') {
     startMemoryGame();
+    return;
+  }
+
+  if (module === 'clock') {
+    showClockModePicker();
     return;
   }
 
@@ -2280,8 +2494,13 @@ viewHome.addEventListener('click', function(e) {
 optionsGrid.addEventListener('click', function(e) {
   const btn = e.target.closest('.option-btn');
   if (!btn || btn.disabled) return;
+  if (btn.dataset.clockAct) return; // 拨指针模式的按钮由各自监听器处理
   if (btn.classList.contains('math-diff-btn')) {
     startMathQuiz(parseInt(btn.dataset.max));
+    return;
+  }
+  if (btn.dataset.clock) {
+    handleClockMode(btn.dataset.clock);
     return;
   }
   const optTxt = btn.textContent.trim();
