@@ -220,6 +220,21 @@ header .star-badge .star-icon {
 .maze-tip { text-align: center; font-size: 18px; color: var(--text-light); margin: 16px 8px 6px; }
 .maze-next { display: block; margin: 8px auto 0; font-family: var(--font); font-size: 20px; padding: 12px 32px; border: none; border-radius: 40px; background: var(--teal); color: #fff; cursor: pointer; box-shadow: var(--shadow); }
 .maze-next:active { transform: scale(0.96); }
+
+.tangram-container { padding: 16px; max-width: 520px; margin: 0 auto; }
+.tangram-diff { display: flex; justify-content: center; gap: 10px; margin: 14px 0 10px; flex-wrap: wrap; }
+.tangram-diff-btn { font-family: var(--font); font-size: 18px; padding: 10px 18px; border: 2px solid #A78BFA; background: #fff; color: #A78BFA; border-radius: 40px; cursor: pointer; box-shadow: var(--shadow); }
+.tangram-diff-btn.active { background: #A78BFA; color: #fff; }
+.tangram-diff-btn:active { transform: scale(0.95); }
+.tangram-board { display: flex; justify-content: center; touch-action: none; margin-top: 4px; }
+.tangram-svg { width: 100%; max-width: 360px; height: auto; background: #fff; border-radius: 16px; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; }
+.tangram-frame { fill: rgba(167,139,250,0.06); stroke: #A78BFA; stroke-width: 3; stroke-dasharray: 8 6; stroke-linecap: round; }
+.tangram-piece { stroke: rgba(0,0,0,0.25); stroke-width: 1.5; cursor: grab; transition: fill 0.2s; }
+.tangram-piece:active { cursor: grabbing; }
+.tangram-piece.placed { stroke: rgba(0,0,0,0.35); }
+.tangram-tip { text-align: center; font-size: 18px; color: var(--text-light); margin: 12px 8px 6px; }
+.tangram-next { display: block; margin: 8px auto 0; font-family: var(--font); font-size: 20px; padding: 12px 32px; border: none; border-radius: 40px; background: #A78BFA; color: #fff; cursor: pointer; box-shadow: var(--shadow); }
+.tangram-next:active { transform: scale(0.96); }
 .clock-svg { display: block; margin: 4px auto 10px; max-width: 220px; width: 60%; height: auto; }
 .clock-svg-drag { touch-action: none; cursor: grab; max-width: 240px; width: 70%; }
 .clock-svg-drag:active { cursor: grabbing; }
@@ -786,6 +801,23 @@ header .star-badge .star-icon {
     <button class="maze-next hidden" id="mazeNext">再玩一关 🔁</button>
   </div>
 
+  <!-- Tangram (七巧板) -->
+  <div id="viewTangram" class="tangram-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="tangramBack">←</button>
+      <span class="quiz-title">🧩 七巧板</span>
+      <span style="width:40px;display:inline-block"></span>
+    </div>
+    <div class="tangram-diff" id="tangramDiff">
+      <button class="tangram-diff-btn" data-count="3">入门 3 块</button>
+      <button class="tangram-diff-btn" data-count="5">进阶 5 块</button>
+      <button class="tangram-diff-btn" data-count="7">挑战 7 块</button>
+    </div>
+    <div class="tangram-board" id="tangramBoard"></div>
+    <div class="tangram-tip" id="tangramTip">把积木拖进虚线框里，点一下可以旋转 🔄</div>
+    <button class="tangram-next hidden" id="tangramNext">再玩一关 🔁</button>
+  </div>
+
   <!-- Reader -->
   <div id="viewReader" class="reader-container hidden">
     <div class="quiz-header">
@@ -1029,6 +1061,7 @@ const viewBooks = $('#viewBooks');
 const viewReader = $('#viewReader');
 const viewGames = $('#viewGames');
 const viewMaze = $('#viewMaze');
+const viewTangram = $('#viewTangram');
 const booksShelf = $('#booksShelf');
 const readerPage = $('#readerPage');
 const readerTitle = $('#readerTitle');
@@ -1043,6 +1076,11 @@ const mazeDiff = $('#mazeDiff');
 const mazeBoard = $('#mazeBoard');
 const mazeTip = $('#mazeTip');
 const mazeNext = $('#mazeNext');
+const tangramBack = $('#tangramBack');
+const tangramDiff = $('#tangramDiff');
+const tangramBoard = $('#tangramBoard');
+const tangramTip = $('#tangramTip');
+const tangramNext = $('#tangramNext');
 const readerBack = $('#readerBack');
 const readerReplay = $('#readerReplay');
 
@@ -2612,13 +2650,142 @@ let bookCategory = null;  // null=大类选择; 'words'/'sentences'=某个大类
 /* ========== GAMES / MAZE ========== */
 
 const GAME_LIST = [
-  { id:'maze', title:'迷宫大冒险', emoji:'🌀', desc:'帮小动物走到终点' }
+  { id:'maze', title:'迷宫大冒险', emoji:'🌀', desc:'帮小动物走到终点' },
+  { id:'tangram', title:'七巧板', emoji:'🧩', desc:'七块积木拼一拼' }
 ];
 
 let mazeGrid = null;
 let mazeSize = 7;
 let mazePlayer = { r:0, c:0 };
 let mazeGoal = { r:0, c:0 };
+
+let tgPieces = [];
+let tgCount = 3;
+let tgUnit = 54;
+let tgFrame = { x:0, y:0, size:0 };
+let tgDrag = null;
+
+const TANGRAM_SHAPES = [
+  { color:'#FF6B6B', pts:[[0,0],[2,0],[0,2]] },
+  { color:'#4ECDC4', pts:[[0,0],[2,0],[0,2]] },
+  { color:'#FFD93D', pts:[[0,0],[1.5,0],[0,1.5]] },
+  { color:'#6BCB77', pts:[[0,0],[1,0],[0,1]] },
+  { color:'#4D96FF', pts:[[0,0],[1,0],[0,1]] },
+  { color:'#FF9F45', pts:[[0,0],[1,0],[1,1],[0,1]] },
+  { color:'#A78BFA', pts:[[0,0],[1,0],[1.5,1],[0.5,1]] }
+];
+
+function startTangram(count) {
+  tgCount = count || 3;
+  buildTangram();
+  tangramNext.classList.add('hidden');
+  tangramTip.textContent = '把积木拖进虚线框里，点一下可以旋转 🔄';
+  tangramDiff.querySelectorAll('.tangram-diff-btn').forEach(function(b){
+    b.classList.toggle('active', parseInt(b.dataset.count) === tgCount);
+  });
+  showView(viewTangram);
+}
+
+function buildTangram() {
+  const U = tgUnit;
+  tgFrame = { x: 68, y: 24, size: 4 * U };
+  tgPieces = TANGRAM_SHAPES.slice(0, tgCount).map(function(s, i) {
+    let mx = 0, my = 0;
+    s.pts.forEach(function(p){ mx += p[0]; my += p[1]; });
+    mx /= s.pts.length; my /= s.pts.length;
+    const local = s.pts.map(function(p){ return [(p[0]-mx)*U, (p[1]-my)*U]; });
+    const rots = [0,90,180,270];
+    return {
+      id: i, color: s.color, local: local,
+      cx: 50 + Math.random() * 260,
+      cy: 300 + Math.random() * 120,
+      rot: rots[Math.floor(Math.random() * 4)],
+      placed: false
+    };
+  });
+  renderTangram();
+}
+
+function renderTangram() {
+  const W = 360, H = 470;
+  let svg = '<svg class="tangram-svg" viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  svg += '<rect class="tangram-frame" x="' + tgFrame.x + '" y="' + tgFrame.y + '" width="' + tgFrame.size + '" height="' + tgFrame.size + '" rx="10"></rect>';
+  tgPieces.forEach(function(p){
+    const pts = p.local.map(function(q){ return q[0] + ',' + q[1]; }).join(' ');
+    svg += '<g id="tg-' + p.id + '" transform="translate(' + p.cx.toFixed(1) + ',' + p.cy.toFixed(1) + ') rotate(' + p.rot + ')">'
+        +  '<polygon class="tangram-piece' + (p.placed ? ' placed' : '') + '" data-id="' + p.id + '" points="' + pts + '" fill="' + p.color + '"></polygon>'
+        +  '</g>';
+  });
+  svg += '</svg>';
+  tangramBoard.innerHTML = svg;
+}
+
+function tgSvgPoint(evt) {
+  const svg = tangramBoard.querySelector('svg');
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
+function tgCheckWin() {
+  if (tgPieces.length && tgPieces.every(function(p){ return p.placed; })) {
+    showMedal();
+    spawnEmojiParticles();
+    spawnConfetti();
+    appData.stars += 1;
+    refreshHeader();
+    saveData(appData);
+    tangramTip.textContent = '拼好啦！真厉害 🎉 获得 1 颗星 ⭐';
+    tangramNext.classList.remove('hidden');
+  }
+}
+
+tangramBoard.addEventListener('pointerdown', function(e){
+  const poly = e.target.closest('.tangram-piece');
+  if (!poly) return;
+  const id = parseInt(poly.dataset.id);
+  const p = tgPieces[id];
+  if (!p) return;
+  const sp = tgSvgPoint(e);
+  tgDrag = { id:id, dx: sp.x - p.cx, dy: sp.y - p.cy, moved:false, sx:sp.x, sy:sp.y };
+});
+tangramBoard.addEventListener('pointermove', function(e){
+  if (!tgDrag) return;
+  const sp = tgSvgPoint(e);
+  const p = tgPieces[tgDrag.id];
+  p.cx = sp.x - tgDrag.dx;
+  p.cy = sp.y - tgDrag.dy;
+  if (Math.abs(sp.x - tgDrag.sx) > 4 || Math.abs(sp.y - tgDrag.sy) > 4) tgDrag.moved = true;
+  const g = document.getElementById('tg-' + tgDrag.id);
+  if (g) g.setAttribute('transform', 'translate(' + p.cx.toFixed(1) + ',' + p.cy.toFixed(1) + ') rotate(' + p.rot + ')');
+});
+tangramBoard.addEventListener('pointerup', function(e){
+  if (!tgDrag) return;
+  const p = tgPieces[tgDrag.id];
+  const g = document.getElementById('tg-' + tgDrag.id);
+  if (!tgDrag.moved) {
+    p.rot = (p.rot + 90) % 360;
+    if (g) g.setAttribute('transform', 'translate(' + p.cx.toFixed(1) + ',' + p.cy.toFixed(1) + ') rotate(' + p.rot + ')');
+  } else {
+    const inFrame = p.cx >= tgFrame.x && p.cx <= tgFrame.x + tgFrame.size
+                 && p.cy >= tgFrame.y && p.cy <= tgFrame.y + tgFrame.size;
+    p.placed = inFrame;
+    if (g) {
+      const poly = g.querySelector('polygon');
+      if (poly) poly.setAttribute('class', 'tangram-piece' + (inFrame ? ' placed' : ''));
+    }
+    tgCheckWin();
+  }
+  tgDrag = null;
+});
+
+tangramBack.addEventListener('click', function() { showView(viewGames); });
+tangramDiff.addEventListener('click', function(e){
+  const btn = e.target.closest('.tangram-diff-btn');
+  if (!btn) return;
+  startTangram(parseInt(btn.dataset.count));
+});
+tangramNext.addEventListener('click', function() { startTangram(tgCount); });
 
 function startGames() {
   renderGames();
@@ -2890,6 +3057,7 @@ gamesShelf.addEventListener('click', function(e) {
   const card = e.target.closest('.book-card');
   if (!card) return;
   if (card.dataset.game === 'maze') startMaze(7);
+  else if (card.dataset.game === 'tangram') startTangram(3);
 });
 mazeDiff.addEventListener('click', function(e) {
   const btn = e.target.closest('.maze-diff-btn');
