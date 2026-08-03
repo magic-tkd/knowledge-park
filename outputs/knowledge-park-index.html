@@ -222,10 +222,12 @@ header .star-badge .star-icon {
 .maze-next:active { transform: scale(0.96); }
 
 .tangram-container { padding: 16px; max-width: 520px; margin: 0 auto; }
-.tangram-diff { display: flex; justify-content: center; gap: 10px; margin: 14px 0 10px; flex-wrap: wrap; }
+.tangram-diff { display: flex; justify-content: center; gap: 10px; margin: 14px 0 10px; flex-wrap: wrap; align-items: center; }
 .tangram-diff-btn { font-family: var(--font); font-size: 18px; padding: 10px 18px; border: 2px solid #A78BFA; background: #fff; color: #A78BFA; border-radius: 40px; cursor: pointer; box-shadow: var(--shadow); }
 .tangram-diff-btn.active { background: #A78BFA; color: #fff; }
 .tangram-diff-btn:active { transform: scale(0.95); }
+.tangram-reshuffle-btn { font-family: var(--font); font-size: 22px; padding: 10px 14px; border: 2px solid #FF9F45; background: #FFF7E6; color: #FF9F45; border-radius: 40px; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.3s; }
+.tangram-reshuffle-btn:hover { transform: rotate(180deg); background: #FFE8C2; }
 .tangram-board { display: flex; justify-content: center; touch-action: none; margin-top: 4px; }
 .tangram-svg { width: 100%; max-width: 400px; height: auto; background: #fff; border-radius: 16px; box-shadow: var(--shadow); user-select: none; -webkit-user-select: none; }
 .tangram-target { fill: rgba(167,139,250,0.05); stroke: #C4B5FD; stroke-width: 2; stroke-dasharray: 6 5; stroke-linecap: round; }
@@ -812,6 +814,7 @@ header .star-badge .star-icon {
       <button class="tangram-diff-btn" data-level="0">入门 2 块</button>
       <button class="tangram-diff-btn" data-level="1">进阶 4 块</button>
       <button class="tangram-diff-btn" data-level="2">挑战 6 块</button>
+      <button class="tangram-reshuffle-btn" id="tangramReshuffle" title="换个造型">🎲</button>
     </div>
     <div class="tangram-board" id="tangramBoard"></div>
     <div class="tangram-tip" id="tangramTip">把彩色积木拖到虚线轮廓上，拼出图形吧 🧩</div>
@@ -1078,6 +1081,7 @@ const mazeTip = $('#mazeTip');
 const mazeNext = $('#mazeNext');
 const tangramBack = $('#tangramBack');
 const tangramDiff = $('#tangramDiff');
+const tangramReshuffle = $('#tangramReshuffle');
 const tangramBoard = $('#tangramBoard');
 const tangramTip = $('#tangramTip');
 const tangramNext = $('#tangramNext');
@@ -2663,32 +2667,76 @@ let mazeGoal = { r:0, c:0 };
 let tgPieces = [];
 let tgTargets = [];
 let tgLevel = 0;
+let tgVariant = 0;
 let tgDrag = null;
 let tgScale = 58, tgOX = 0, tgOY = 0;
 const R2 = Math.SQRT2;
 
 // 真七巧板：标准块（最小小三角腿=1）大三角腿2 / 中三角腿√2 / 小三角腿1 / 正方形边1
-// 每个造型 = 各块的「目标绝对多边形」(单位坐标)，相邻块共享顶点 -> 严丝合缝拼成图形
-const TG_PUZZLES = [
-  { name:'大正方形', pieces:[
-    { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,2]] },
-    { shape:'L', color:'#4ECDC4', target:[[2,0],[0,2],[2,2]] }
-  ]},
-  { name:'双正方形', pieces:[
-    { shape:'M', color:'#FFD93D', target:[[0,0],[R2,0],[0,R2]] },
-    { shape:'M', color:'#FF9F45', target:[[R2,0],[0,R2],[R2,R2]] },
-    { shape:'S', color:'#6BCB77', target:[[2.5,0.2],[2.5+1,0.2],[2.5,0.2+1]] },
-    { shape:'S', color:'#4D96FF', target:[[2.5+1,0.2],[2.5,0.2+1],[2.5+1,0.2+1]] }
-  ]},
-  { name:'三正方形', pieces:[
-    { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,2]] },
-    { shape:'L', color:'#4ECDC4', target:[[2,0],[0,2],[2,2]] },
-    { shape:'M', color:'#FFD93D', target:[[2.4,0.1],[2.4+R2,0.1],[2.4,0.1+R2]] },
-    { shape:'M', color:'#FF9F45', target:[[2.4+R2,0.1],[2.4,0.1+R2],[2.4+R2,0.1+R2]] },
-    { shape:'S', color:'#6BCB77', target:[[0,2.4],[1,2.4],[0,3.4]] },
-    { shape:'S', color:'#4D96FF', target:[[1,2.4],[0,3.4],[1,3.4]] }
-  ]}
-];
+// 每个难度有多套造型，进入或点"换一换"时随机选一套
+// 几何原则：只用"两等腰直角三角沿斜边镜像=正方形"这一已验证的拼合
+const TG_PUZZLES = {
+  0: [ // 入门：2块大三角，可拼"大正方形"或"长方形"两种造型
+    { name:'大正方形', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,2]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,0],[0,2],[2,2]] }
+    ]},
+    { name:'长方形', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,1]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,0],[0,1],[2,1]] }
+    ]},
+    { name:'倒三角', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,2],[2,2],[0,0]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,2],[0,0],[2,0]] }
+    ]}
+  ],
+  1: [ // 进阶：2中三角+2小三角 = 边√2正方+边1正方，3种相对位置
+    { name:'双正方形·横排', pieces:[
+      { shape:'M', color:'#FFD93D', target:[[0,0],[R2,0],[0,R2]] },
+      { shape:'M', color:'#FF9F45', target:[[R2,0],[0,R2],[R2,R2]] },
+      { shape:'S', color:'#6BCB77', target:[[2.6,0.2],[3.6,0.2],[2.6,1.2]] },
+      { shape:'S', color:'#4D96FF', target:[[3.6,0.2],[2.6,1.2],[3.6,1.2]] }
+    ]},
+    { name:'双正方形·上下叠', pieces:[
+      { shape:'M', color:'#FFD93D', target:[[0.3,0],[0.3+R2,0],[0.3,R2]] },
+      { shape:'M', color:'#FF9F45', target:[[0.3+R2,0],[0.3,R2],[0.3+R2,R2]] },
+      { shape:'S', color:'#6BCB77', target:[[0.95,1.8],[1.95,1.8],[0.95,2.8]] },
+      { shape:'S', color:'#4D96FF', target:[[1.95,1.8],[0.95,2.8],[1.95,2.8]] }
+    ]},
+    { name:'双正方形·错角', pieces:[
+      { shape:'M', color:'#FFD93D', target:[[0,0],[R2,0],[0,R2]] },
+      { shape:'M', color:'#FF9F45', target:[[R2,0],[0,R2],[R2,R2]] },
+      { shape:'S', color:'#6BCB77', target:[[3.0,0.5],[4.0,0.5],[3.0,1.5]] },
+      { shape:'S', color:'#4D96FF', target:[[4.0,0.5],[3.0,1.5],[4.0,1.5]] }
+    ]}
+  ],
+  2: [ // 挑战：大+中+小三正方形，3种排布
+    { name:'三正方形·田字', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,2]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,0],[0,2],[2,2]] },
+      { shape:'M', color:'#FFD93D', target:[[2.6,0],[2.6+R2,0],[2.6,R2]] },
+      { shape:'M', color:'#FF9F45', target:[[2.6+R2,0],[2.6,R2],[2.6+R2,R2]] },
+      { shape:'S', color:'#6BCB77', target:[[0,2.6],[1,2.6],[0,3.6]] },
+      { shape:'S', color:'#4D96FF', target:[[1,2.6],[0,3.6],[1,3.6]] }
+    ]},
+    { name:'三正方形·阶梯', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,2],[2,2],[0,4]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,2],[0,4],[2,4]] },
+      { shape:'M', color:'#FFD93D', target:[[1,0.6],[1+R2,0.6],[1,0.6+R2]] },
+      { shape:'M', color:'#FF9F45', target:[[1+R2,0.6],[1,0.6+R2],[1+R2,0.6+R2]] },
+      { shape:'S', color:'#6BCB77', target:[[2.5,0],[3.5,0],[2.5,1]] },
+      { shape:'S', color:'#4D96FF', target:[[3.5,0],[2.5,1],[3.5,1]] }
+    ]},
+    { name:'三正方形·错位', pieces:[
+      { shape:'L', color:'#FF6B6B', target:[[0,0],[2,0],[0,2]] },
+      { shape:'L', color:'#4ECDC4', target:[[2,0],[0,2],[2,2]] },
+      { shape:'M', color:'#FFD93D', target:[[2.6,1.5],[2.6+R2,1.5],[2.6,1.5+R2]] },
+      { shape:'M', color:'#FF9F45', target:[[2.6+R2,1.5],[2.6,1.5+R2],[2.6+R2,1.5+R2]] },
+      { shape:'S', color:'#6BCB77', target:[[0,2.6],[1,2.6],[0,3.6]] },
+      { shape:'S', color:'#4D96FF', target:[[1,2.6],[0,3.6],[1,3.6]] }
+    ]}
+  ]
+};
 
 function tgHexToRgb(hex){
   const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -2709,9 +2757,15 @@ function tgPtsMatch(a,b,eps){
       && b.every(function(pb){ return a.some(function(pa){ return Math.hypot(pa[0]-pb[0],pa[1]-pb[1])<eps; }); });
 }
 
-function startTangram(level){
+function startTangram(level, variantIndex){
   tgLevel = (level==null)?0:level;
-  const pz = TG_PUZZLES[tgLevel];
+  const list = TG_PUZZLES[tgLevel];
+  // 缺省或越界 → 随机选一套（每次进入/换一换都变化）
+  if (variantIndex==null || variantIndex<0 || variantIndex>=list.length){
+    variantIndex = Math.floor(Math.random()*list.length);
+  }
+  tgVariant = variantIndex;
+  const pz = list[variantIndex];
   let minx=1e9,miny=1e9,maxx=-1e9,maxy=-1e9;
   pz.pieces.forEach(function(pc){ pc.target.forEach(function(p){
     if(p[0]<minx)minx=p[0]; if(p[1]<miny)miny=p[1]; if(p[0]>maxx)maxx=p[0]; if(p[1]>maxy)maxy=p[1];
@@ -2722,8 +2776,8 @@ function startTangram(level){
   tgTargets = pz.pieces.map(function(pc){ return { shape:pc.shape, color:pc.color, pts:pc.target.map(function(q){return [q[0],q[1]];}), filled:false }; });
   // 托盘紧贴目标下方。积木不随机旋转，与虚线轮廓方向一致；按块数排成 1~2 行，避免重叠
   const trayTop = (maxy*SCALE + tgOY + 36) / tgScale; // 单位坐标，离目标底约 0.6 单位
-  // 积木局部包围盒宽 2 单位（以大三角为准），sx 必须在 [2/3, 3.12] 才能完整显示
-  const sxMin = 2/3, sxMax = 3.12;
+  // 积木局部包围盒宽 2 单位（以大三角为准），sx 在合适范围内完整显示
+  const sxMin = 0.5, sxMax = 4.2;
   const N = pz.pieces.length;
   const cols = N <= 2 ? N : 3;
   const rows = Math.ceil(N / cols);
@@ -2741,14 +2795,14 @@ function startTangram(level){
     return { id:i, shape:pc.shape, color:pc.color, cur:cur, placed:false };
   });
   tangramNext.classList.add('hidden');
-  tangramTip.textContent='把彩色积木拖到同色的虚线轮廓上，点一下可旋转 🔄';
-  tangramDiff.querySelectorAll('.tangram-diff-btn').forEach(function(b,idx){ b.classList.toggle('active', idx===tgLevel); });
+  tangramTip.textContent='🎲 '+pz.name+' - 把彩色积木拖到同色的虚线轮廓上，点一下可旋转';
+  tangramDiff.querySelectorAll('.tangram-diff-btn[data-level]').forEach(function(b){ b.classList.toggle('active', parseInt(b.dataset.level)===tgLevel); });
   renderTangram();
   showView(viewTangram);
 }
 
 function renderTangram(){
-  let svg='<svg class="tangram-svg" viewBox="0 0 400 470" xmlns="http://www.w3.org/2000/svg">';
+  let svg='<svg class="tangram-svg" viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">';
   tgTargets.forEach(function(t){
     const pts=t.pts.map(function(q){const px=tgToPx(q);return px[0].toFixed(1)+','+px[1].toFixed(1);}).join(' ');
     const fill = tgColorTint(t.color||'#A78BFA', 0.13);
@@ -2816,9 +2870,10 @@ tangramBoard.addEventListener('pointerup',function(e){
 
 tangramBack.addEventListener('click',function(){ showView(viewGames); });
 tangramDiff.addEventListener('click',function(e){
-  const btn=e.target.closest('.tangram-diff-btn'); if(!btn) return;
+  const btn=e.target.closest('.tangram-diff-btn[data-level]'); if(!btn) return;
   startTangram(parseInt(btn.dataset.level));
 });
+tangramReshuffle.addEventListener('click',function(){ startTangram(tgLevel); });
 tangramNext.addEventListener('click',function(){ startTangram(tgLevel); });
 
 function startGames() {
