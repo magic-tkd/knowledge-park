@@ -199,6 +199,27 @@ header .star-badge .star-icon {
 .card-clock { border-color: #38BDF8; background: rgba(56,189,248,0.12); }
 .card-clock .label { color: #38BDF8; }
 .card-clock .emoji { color: #38BDF8; }
+.card-games { border-color: #C084FC; background: rgba(192,132,252,0.12); }
+.card-games .label { color: #C084FC; }
+.card-games .emoji { color: #C084FC; }
+.home-grid .module-card:nth-child(11) { animation-delay: 0.54s; }
+
+/* 迷宫 */
+.maze-container { padding: 16px; max-width: 520px; margin: 0 auto; }
+.maze-diff { display: flex; justify-content: center; gap: 10px; margin: 14px 0 18px; flex-wrap: wrap; }
+.maze-diff-btn { font-family: var(--font); font-size: 18px; padding: 10px 20px; border: 2px solid var(--coral); background: #fff; color: var(--coral); border-radius: 40px; cursor: pointer; box-shadow: var(--shadow); }
+.maze-diff-btn.active { background: var(--coral); color: #fff; }
+.maze-diff-btn:active { transform: scale(0.95); }
+.maze-board { display: flex; justify-content: center; touch-action: manipulation; }
+.maze-svg { width: 100%; max-width: 340px; height: auto; background: #fff; border-radius: 16px; box-shadow: var(--shadow); }
+.maze-floor { fill: #FFF3E0; }
+.maze-wall { stroke: #5B4636; stroke-width: 3; stroke-linecap: round; }
+.maze-cell-hit { fill: transparent; cursor: pointer; }
+.maze-player { fill: #FF6B6B; }
+.maze-goal { fill: #4ECDC4; }
+.maze-tip { text-align: center; font-size: 18px; color: var(--text-light); margin: 16px 8px 6px; }
+.maze-next { display: block; margin: 8px auto 0; font-family: var(--font); font-size: 20px; padding: 12px 32px; border: none; border-radius: 40px; background: var(--teal); color: #fff; cursor: pointer; box-shadow: var(--shadow); }
+.maze-next:active { transform: scale(0.96); }
 .clock-svg { display: block; margin: 4px auto 10px; max-width: 220px; width: 60%; height: auto; }
 .clock-svg-drag { touch-action: none; cursor: grab; max-width: 240px; width: 70%; }
 .clock-svg-drag:active { cursor: grabbing; }
@@ -697,6 +718,11 @@ header .star-badge .star-icon {
       <div class="label">钟表</div>
       <div class="desc">认识整点和半点</div>
     </div>
+    <div class="module-card card-games" data-module="games">
+      <div class="emoji">🎮</div>
+      <div class="label">游戏</div>
+      <div class="desc">迷宫 · 逻辑挑战</div>
+    </div>
   </div>
 
   <div id="ttsTip" class="tts-tip" hidden>🔇 当前浏览器不支持语音朗读，请改用 Safari 或 Chrome 打开</div>
@@ -731,6 +757,33 @@ header .star-badge .star-icon {
       <span style="width:40px;display:inline-block"></span>
     </div>
     <div class="books-shelf" id="booksShelf"></div>
+  </div>
+
+  <!-- Games (游戏) -->
+  <div id="viewGames" class="books-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="gamesBack">←</button>
+      <span class="quiz-title">🎮 游戏乐园</span>
+      <span style="width:40px;display:inline-block"></span>
+    </div>
+    <div class="books-shelf" id="gamesShelf"></div>
+  </div>
+
+  <!-- Maze (迷宫) -->
+  <div id="viewMaze" class="maze-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="mazeBack">←</button>
+      <span class="quiz-title">🌀 迷宫大冒险</span>
+      <span style="width:40px;display:inline-block"></span>
+    </div>
+    <div class="maze-diff" id="mazeDiff">
+      <button class="maze-diff-btn" data-size="5">小迷宫</button>
+      <button class="maze-diff-btn" data-size="7">中迷宫</button>
+      <button class="maze-diff-btn" data-size="9">大迷宫</button>
+    </div>
+    <div class="maze-board" id="mazeBoard"></div>
+    <div class="maze-tip" id="mazeTip">点击旁边的通道，帮小动物走到终点 🏁</div>
+    <button class="maze-next hidden" id="mazeNext">再玩一关 🔁</button>
   </div>
 
   <!-- Reader -->
@@ -974,6 +1027,8 @@ const feedbackOverlay = $('#feedbackOverlay');
 const feedbackText = $('#feedbackText');
 const viewBooks = $('#viewBooks');
 const viewReader = $('#viewReader');
+const viewGames = $('#viewGames');
+const viewMaze = $('#viewMaze');
 const booksShelf = $('#booksShelf');
 const readerPage = $('#readerPage');
 const readerTitle = $('#readerTitle');
@@ -981,6 +1036,13 @@ const readerProgress = $('#readerProgress');
 const readerPrev = $('#readerPrev');
 const readerNext = $('#readerNext');
 const booksBack = $('#booksBack');
+const gamesShelf = $('#gamesShelf');
+const gamesBack = $('#gamesBack');
+const mazeBack = $('#mazeBack');
+const mazeDiff = $('#mazeDiff');
+const mazeBoard = $('#mazeBoard');
+const mazeTip = $('#mazeTip');
+const mazeNext = $('#mazeNext');
 const readerBack = $('#readerBack');
 const readerReplay = $('#readerReplay');
 
@@ -1421,6 +1483,8 @@ function showView(view) {
   viewResults.classList.add('hidden');
   viewBooks.classList.add('hidden');
   viewReader.classList.add('hidden');
+  viewGames.classList.add('hidden');
+  viewMaze.classList.add('hidden');
   view.classList.remove('hidden');
 }
 
@@ -2489,6 +2553,7 @@ viewHome.addEventListener('click', function(e) {
   if (!card) return;
   const module = card.dataset.module;
   if (module === 'books') { startBooks(); return; }
+  if (module === 'games') { startGames(); return; }
   if (module) startQuiz(module);
 });
 
@@ -2543,6 +2608,140 @@ adminOverlay.addEventListener('click', function(e) {
 let currentBook = null;
 let bookPageIndex = 0;
 let bookCategory = null;  // null=大类选择; 'words'/'sentences'=某个大类下的书列表
+
+/* ========== GAMES / MAZE ========== */
+
+const GAME_LIST = [
+  { id:'maze', title:'迷宫大冒险', emoji:'🌀', desc:'帮小动物走到终点' }
+];
+
+let mazeGrid = null;
+let mazeSize = 7;
+let mazePlayer = { r:0, c:0 };
+let mazeGoal = { r:0, c:0 };
+
+function startGames() {
+  renderGames();
+  showView(viewGames);
+}
+
+function renderGames() {
+  gamesShelf.innerHTML = '';
+  GAME_LIST.forEach(function(g) {
+    const card = document.createElement('div');
+    card.className = 'book-card';
+    card.dataset.game = g.id;
+    card.innerHTML =
+      '<div class="book-emoji">' + g.emoji + '</div>' +
+      '<div class="book-title">' + g.title + '</div>' +
+      '<div class="book-count">' + g.desc + '</div>';
+    gamesShelf.appendChild(card);
+  });
+}
+
+function startMaze(size) {
+  mazeSize = size || 7;
+  generateMaze(mazeSize);
+  mazePlayer = { r:0, c:0 };
+  mazeGoal = { r: mazeSize - 1, c: mazeSize - 1 };
+  mazeNext.classList.add('hidden');
+  mazeTip.textContent = '点击旁边的通道，帮小动物走到终点 🏁';
+  mazeDiff.querySelectorAll('.maze-diff-btn').forEach(function(b){
+    b.classList.toggle('active', parseInt(b.dataset.size) === mazeSize);
+  });
+  renderMaze();
+  showView(viewMaze);
+}
+
+function generateMaze(size) {
+  mazeGrid = [];
+  for (let r = 0; r < size; r++) {
+    mazeGrid[r] = [];
+    for (let c = 0; c < size; c++) {
+      mazeGrid[r][c] = { top:true, right:true, bottom:true, left:true, visited:false };
+    }
+  }
+  const stack = [[0, 0]];
+  mazeGrid[0][0].visited = true;
+  const dirs = [[-1,0],[1,0],[0,-1],[0,1]];
+  while (stack.length) {
+    const cur = stack[stack.length - 1];
+    const r = cur[0], c = cur[1];
+    const nb = [];
+    for (let i = 0; i < dirs.length; i++) {
+      const nr = r + dirs[i][0], nc = c + dirs[i][1];
+      if (nr >= 0 && nr < size && nc >= 0 && nc < size && !mazeGrid[nr][nc].visited) {
+        nb.push([nr, nc, dirs[i][0], dirs[i][1]]);
+      }
+    }
+    if (!nb.length) { stack.pop(); continue; }
+    const pick = nb[Math.floor(Math.random() * nb.length)];
+    const nr = pick[0], nc = pick[1], dr = pick[2], dc = pick[3];
+    if (dr === -1) { mazeGrid[r][c].top = false; mazeGrid[nr][nc].bottom = false; }
+    else if (dr === 1) { mazeGrid[r][c].bottom = false; mazeGrid[nr][nc].top = false; }
+    else if (dc === -1) { mazeGrid[r][c].left = false; mazeGrid[nr][nc].right = false; }
+    else if (dc === 1) { mazeGrid[r][c].right = false; mazeGrid[nr][nc].left = false; }
+    mazeGrid[nr][nc].visited = true;
+    stack.push([nr, nc]);
+  }
+}
+
+function renderMaze() {
+  const size = mazeSize;
+  const cell = 40, pad = 4;
+  const W = size * cell + pad * 2;
+  let svg = '<svg class="maze-svg" viewBox="0 0 ' + W + ' ' + W + '" xmlns="http://www.w3.org/2000/svg">';
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      svg += '<rect class="maze-floor" x="' + (pad + c*cell) + '" y="' + (pad + r*cell) + '" width="' + cell + '" height="' + cell + '"/>';
+    }
+  }
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      const g = mazeGrid[r][c];
+      const x = pad + c * cell, y = pad + r * cell;
+      if (g.top)    svg += '<line class="maze-wall" x1="' + x + '" y1="' + y + '" x2="' + (x+cell) + '" y2="' + y + '"/>';
+      if (g.left)   svg += '<line class="maze-wall" x1="' + x + '" y1="' + y + '" x2="' + x + '" y2="' + (y+cell) + '"/>';
+      if (g.right)  svg += '<line class="maze-wall" x1="' + (x+cell) + '" y1="' + y + '" x2="' + (x+cell) + '" y2="' + (y+cell) + '"/>';
+      if (g.bottom) svg += '<line class="maze-wall" x1="' + x + '" y1="' + (y+cell) + '" x2="' + (x+cell) + '" y2="' + (y+cell) + '"/>';
+    }
+  }
+  const gx = pad + mazeGoal.c * cell, gy = pad + mazeGoal.r * cell;
+  svg += '<rect class="maze-goal" x="' + (gx + cell*0.3) + '" y="' + (gy + cell*0.3) + '" width="' + (cell*0.4) + '" height="' + (cell*0.4) + '" rx="4"/>';
+  const px = pad + mazePlayer.c * cell + cell/2, py = pad + mazePlayer.r * cell + cell/2;
+  svg += '<circle class="maze-player" cx="' + px + '" cy="' + py + '" r="' + (cell*0.28) + '"/>';
+  for (let r = 0; r < size; r++) {
+    for (let c = 0; c < size; c++) {
+      svg += '<rect class="maze-cell-hit" data-r="' + r + '" data-c="' + c + '" x="' + (pad + c*cell) + '" y="' + (pad + r*cell) + '" width="' + cell + '" height="' + cell + '"/>';
+    }
+  }
+  svg += '</svg>';
+  mazeBoard.innerHTML = svg;
+}
+
+function moveMazeTo(r, c) {
+  const dr = Math.abs(r - mazePlayer.r), dc = Math.abs(c - mazePlayer.c);
+  if (dr + dc !== 1) return;
+  const g = mazeGrid[mazePlayer.r][mazePlayer.c];
+  if (r === mazePlayer.r - 1 && g.top) return;
+  if (r === mazePlayer.r + 1 && g.bottom) return;
+  if (c === mazePlayer.c - 1 && g.left) return;
+  if (c === mazePlayer.c + 1 && g.right) return;
+  mazePlayer = { r, c };
+  renderMaze();
+  if (r === mazeGoal.r && c === mazeGoal.c) mazeWin();
+}
+
+function mazeWin() {
+  showMedal();
+  spawnEmojiParticles();
+  spawnConfetti();
+  appData.stars += 1;
+  refreshHeader();
+  saveData(appData);
+  mazeTip.textContent = '太棒了！走到终点啦 🎉 获得 1 颗星 ⭐';
+  mazeNext.classList.remove('hidden');
+}
 
 function startBooks() {
   bookCategory = null;  // 每次进绘本都从大类开始
@@ -2685,6 +2884,24 @@ booksShelf.addEventListener('click', function(e) {
   openBook(card.dataset.book);
 });
 booksBack.addEventListener('click', function() { showView(viewHome); });
+gamesBack.addEventListener('click', function() { showView(viewHome); });
+mazeBack.addEventListener('click', function() { showView(viewGames); });
+gamesShelf.addEventListener('click', function(e) {
+  const card = e.target.closest('.book-card');
+  if (!card) return;
+  if (card.dataset.game === 'maze') startMaze(7);
+});
+mazeDiff.addEventListener('click', function(e) {
+  const btn = e.target.closest('.maze-diff-btn');
+  if (!btn) return;
+  startMaze(parseInt(btn.dataset.size));
+});
+mazeBoard.addEventListener('click', function(e) {
+  const hit = e.target.closest('.maze-cell-hit');
+  if (!hit) return;
+  moveMazeTo(parseInt(hit.dataset.r), parseInt(hit.dataset.c));
+});
+mazeNext.addEventListener('click', function() { startMaze(mazeSize); });
 readerBack.addEventListener('click', function() { currentBook = null; showView(viewBooks); });
 readerPrev.addEventListener('click', function() { readerGo(-1); });
 readerNext.addEventListener('click', function() { readerGo(1); });
