@@ -2690,6 +2690,15 @@ const TG_PUZZLES = [
   ]}
 ];
 
+function tgHexToRgb(hex){
+  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [167,139,250];
+}
+function tgColorTint(hex, a){
+  const c = tgHexToRgb(hex);
+  return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';
+}
+
 function tgCentroid(pts){ let x=0,y=0; pts.forEach(function(p){x+=p[0];y+=p[1];}); return [x/pts.length,y/pts.length]; }
 function tgRot(p,deg){ const r=deg*Math.PI/180,c=Math.cos(r),s=Math.sin(r); return [p[0]*c-p[1]*s, p[0]*s+p[1]*c]; }
 function tgToPx(p){ return [p[0]*tgScale+tgOX, p[1]*tgScale+tgOY]; }
@@ -2709,18 +2718,30 @@ function startTangram(level){
   });});
   const SCALE=58;
   const tw=(maxx-minx)*SCALE, th=(maxy-miny)*SCALE;
-  tgScale=SCALE; tgOX=(400-tw)/2-minx*SCALE; tgOY=26-miny*SCALE;
-  tgTargets = pz.pieces.map(function(pc){ return { shape:pc.shape, pts:pc.target.map(function(q){return [q[0],q[1]];}), filled:false }; });
-  const trayCY=(365-tgOY)/tgScale;
+  tgScale=SCALE; tgOX=(400-tw)/2-minx*SCALE; tgOY=20-miny*SCALE;
+  tgTargets = pz.pieces.map(function(pc){ return { shape:pc.shape, color:pc.color, pts:pc.target.map(function(q){return [q[0],q[1]];}), filled:false }; });
+  // 托盘紧贴目标下方。积木不随机旋转，与虚线轮廓方向一致；按块数排成 1~2 行，避免重叠
+  const trayTop = (maxy*SCALE + tgOY + 36) / tgScale; // 单位坐标，离目标底约 0.6 单位
+  // 积木局部包围盒宽 2 单位（以大三角为准），sx 必须在 [2/3, 3.12] 才能完整显示
+  const sxMin = 2/3, sxMax = 3.12;
+  const N = pz.pieces.length;
+  const cols = N <= 2 ? N : 3;
+  const rows = Math.ceil(N / cols);
+  const cellW = cols === 1 ? 0 : (sxMax - sxMin) / (cols - 1);
+  const cellH = 1.6;
   tgPieces = pz.pieces.map(function(pc,i){
-    const tc=tgCentroid(pc.target);
-    const local=pc.target.map(function(p){return [p[0]-tc[0],p[1]-tc[1]];}).map(function(p){return tgRot(p,(Math.floor(Math.random()*8))*45);});
-    const sx=0.7+(i%3)*1.5, sy=trayCY+Math.floor(i/3)*1.3;
-    const cur=local.map(function(p){return [p[0]+sx,p[1]+sy];});
+    const tc = tgCentroid(pc.target);
+    // 不做随机旋转 —— 让积木一开始就和虚线轮廓方向一致，孩子拖过去就能对齐
+    const local = pc.target.map(function(p){ return [p[0]-tc[0], p[1]-tc[1]]; });
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+    const sx = sxMin + col * cellW;
+    const sy = trayTop + row * cellH;
+    const cur = local.map(function(p){ return [p[0]+sx, p[1]+sy]; });
     return { id:i, shape:pc.shape, color:pc.color, cur:cur, placed:false };
   });
   tangramNext.classList.add('hidden');
-  tangramTip.textContent='把彩色积木拖到虚线轮廓上，点一下可旋转 🔄';
+  tangramTip.textContent='把彩色积木拖到同色的虚线轮廓上，点一下可旋转 🔄';
   tangramDiff.querySelectorAll('.tangram-diff-btn').forEach(function(b,idx){ b.classList.toggle('active', idx===tgLevel); });
   renderTangram();
   showView(viewTangram);
@@ -2730,7 +2751,9 @@ function renderTangram(){
   let svg='<svg class="tangram-svg" viewBox="0 0 400 470" xmlns="http://www.w3.org/2000/svg">';
   tgTargets.forEach(function(t){
     const pts=t.pts.map(function(q){const px=tgToPx(q);return px[0].toFixed(1)+','+px[1].toFixed(1);}).join(' ');
-    svg+='<polygon class="tangram-target" points="'+pts+'"></polygon>';
+    const fill = tgColorTint(t.color||'#A78BFA', 0.13);
+    const stroke = tgColorTint(t.color||'#A78BFA', 0.85);
+    svg+='<polygon class="tangram-target" points="'+pts+'" style="fill:'+fill+';stroke:'+stroke+'"></polygon>';
   });
   tgPieces.forEach(function(p){
     const pts=p.cur.map(function(q){const px=tgToPx(q);return px[0].toFixed(1)+','+px[1].toFixed(1);}).join(' ');
@@ -2766,7 +2789,7 @@ tangramBoard.addEventListener('pointermove',function(e){
   if(!tgDrag) return;
   const sp=tgSvgPoint(e); const p=tgPieces[tgDrag.id];
   const dx=sp[0]-tgDrag.sx, dy=sp[1]-tgDrag.sy;
-  if(Math.abs(dx)>0.04||Math.abs(dy)>0.04) tgDrag.moved=true;
+  if(Math.abs(dx)>0.15||Math.abs(dy)>0.15) tgDrag.moved=true;
   p.cur=tgDrag.startCur.map(function(q){return [q[0]+dx,q[1]+dy];});
   const poly=document.getElementById('tgp-'+p.id);
   if(poly) poly.setAttribute('points', p.cur.map(function(q){const px=tgToPx(q);return px[0].toFixed(1)+','+px[1].toFixed(1);}).join(' '));
@@ -2783,7 +2806,7 @@ tangramBoard.addEventListener('pointerup',function(e){
     for(let j=0;j<tgTargets.length;j++){
       const t=tgTargets[j];
       if(t.filled||t.shape!==p.shape) continue;
-      if(tgPtsMatch(p.cur,t.pts,0.32)){ p.cur=t.pts.map(function(q){return [q[0],q[1]];}), p.placed=true, t.filled=true, snapped=true; break; }
+      if(tgPtsMatch(p.cur,t.pts,0.5)){ p.cur=t.pts.map(function(q){return [q[0],q[1]];}), p.placed=true, t.filled=true, snapped=true; break; }
     }
   }
   renderTangram();
