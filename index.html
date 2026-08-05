@@ -240,6 +240,48 @@ header .star-badge .star-icon {
 .book-card .book-count { font-size: 13px; color: var(--text-light); margin-top: 4px; }
 .book-card .book-done { position: absolute; top: 8px; right: 10px; font-size: 18px; }
 .book-cat-back { display: inline-block; font-size: 17px; color: var(--text-light); background: var(--white); border: 2px solid #e5e7eb; border-radius: 30px; padding: 8px 18px; margin-bottom: 14px; cursor: pointer; }
+/* ========== 识字模块 ========== */
+.lit-container { padding: 16px; max-width: 520px; margin: 0 auto; }
+.lit-steps { display: flex; justify-content: center; gap: 4px; margin: 10px 0 6px; }
+.lit-step { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; max-width: 72px; }
+.lit-step-dot { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; background: #E5E7EB; color: #9CA3AF; transition: all 0.3s; }
+.lit-step.active .lit-step-dot { background: var(--coral); color: #fff; transform: scale(1.15); box-shadow: 0 2px 8px rgba(255,107,107,0.4); }
+.lit-step.done .lit-step-dot { background: #6BCB77; color: #fff; }
+.lit-step-label { font-size: 11px; color: var(--text-light); text-align: center; line-height: 1.2; }
+.lit-step.active .lit-step-label { color: var(--coral); font-weight: 600; }
+.lit-content { min-height: 340px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 16px 8px; }
+.lit-emoji-big { font-size: 100px; line-height: 1; margin-bottom: 16px; animation: litBounce 0.6s ease; }
+.lit-char-big { font-size: 120px; line-height: 1; font-weight: 700; color: var(--text); margin-bottom: 8px; animation: litBounce 0.6s ease; }
+.lit-pinyin { font-size: 28px; color: var(--coral); margin-bottom: 12px; font-weight: 600; }
+.lit-evolution { font-size: 17px; line-height: 1.7; color: var(--text); background: var(--white); border-radius: 14px; padding: 16px 18px; box-shadow: var(--shadow); margin: 8px 0; text-align: left; }
+.lit-evolution-title { font-size: 14px; color: var(--text-light); margin-bottom: 6px; font-weight: 600; }
+.lit-type-badge { display: inline-block; font-size: 13px; color: #fff; background: var(--coral); border-radius: 20px; padding: 3px 12px; margin-bottom: 10px; }
+.lit-words { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin: 12px 0; }
+.lit-word-chip { font-size: 20px; font-weight: 600; background: var(--white); border: 2px solid #FB7185; border-radius: 30px; padding: 8px 18px; cursor: pointer; box-shadow: var(--shadow); transition: transform 0.2s; }
+.lit-word-chip:active { transform: scale(0.93); }
+.lit-sentence { font-size: 19px; line-height: 1.7; color: var(--text); background: rgba(255,243,230,0.8); border-radius: 14px; padding: 14px 18px; margin: 10px 0; text-align: center; cursor: pointer; }
+.lit-sentence:active { transform: scale(0.98); }
+.lit-listen-btn { font-family: var(--font); font-size: 22px; padding: 14px 36px; border: none; border-radius: 40px; background: var(--coral); color: #fff; cursor: pointer; box-shadow: var(--shadow); margin: 10px 0; }
+.lit-listen-btn:active { transform: scale(0.95); }
+.lit-game-prompt { font-size: 19px; color: var(--text); margin-bottom: 16px; text-align: center; font-weight: 600; }
+.lit-game-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; max-width: 360px; }
+.lit-game-opt { font-size: 36px; font-weight: 700; padding: 20px 10px; border: 3px solid #E5E7EB; border-radius: 16px; background: var(--white); cursor: pointer; box-shadow: var(--shadow); transition: all 0.2s; text-align: center; min-height: 72px; display: flex; align-items: center; justify-content: center; }
+.lit-game-opt:active { transform: scale(0.93); }
+.lit-game-opt.correct { border-color: #6BCB77; background: rgba(107,203,119,0.15); animation: litPulse 0.4s ease; }
+.lit-game-opt.wrong { border-color: #FF6B6B; background: rgba(255,107,107,0.12); animation: litShake 0.4s ease; }
+.lit-next-btn { display: block; margin: 8px auto 0; font-family: var(--font); font-size: 22px; padding: 14px 48px; border: none; border-radius: 40px; background: var(--coral); color: #fff; cursor: pointer; box-shadow: var(--shadow); }
+.lit-next-btn:active { transform: scale(0.96); }
+.lit-next-btn:disabled { background: #D1D5DB; color: #9CA3AF; box-shadow: none; cursor: default; }
+.lit-complete { text-align: center; padding: 20px; }
+.lit-complete-emoji { font-size: 80px; margin-bottom: 12px; animation: litBounce 0.8s ease; }
+.lit-complete-text { font-size: 24px; font-weight: 700; color: var(--coral); margin-bottom: 8px; }
+.lit-complete-sub { font-size: 16px; color: var(--text-light); margin-bottom: 20px; }
+.lit-progress-bar { width: 100%; height: 6px; background: #E5E7EB; border-radius: 3px; margin: 8px 0 4px; overflow: hidden; }
+.lit-progress-fill { height: 100%; background: var(--coral); border-radius: 3px; transition: width 0.3s; }
+.lit-review-hint { font-size: 13px; color: var(--text-light); text-align: center; margin-bottom: 6px; }
+@keyframes litBounce { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes litPulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes litShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 .book-cat-back:active { transform: scale(0.96); }
 .reader-container { padding: 16px; max-width: 720px; margin: 0 auto; }
 .reader-page { text-align: center; padding: 30px 10px; min-height: 44vh; display: flex; flex-direction: column; align-items: center; justify-content: center; }
@@ -742,6 +784,20 @@ header .star-badge .star-icon {
     <div class="options-grid" id="optionsGrid"></div>
   </div>
 
+  <!-- Literacy (识字 5步学习) -->
+  <div id="viewLiteracy" class="lit-container hidden">
+    <div class="quiz-header">
+      <button class="back-btn" id="litBack">&larr;</button>
+      <span class="quiz-title" id="litTitle">📖 识字</span>
+      <button class="replay-btn" id="litReplay" title="重新朗读">&#128266;</button>
+    </div>
+    <div class="lit-progress-bar"><div class="lit-progress-fill" id="litLevelProgress" style="width:0%"></div></div>
+    <div class="lit-review-hint" id="litReviewHint"></div>
+    <div class="lit-steps" id="litSteps"></div>
+    <div class="lit-content" id="litContent"></div>
+    <button class="lit-next-btn" id="litNext">下一步 &rarr;</button>
+  </div>
+
   <!-- Results -->
   <div id="viewResults" class="results-container hidden">
     <div class="results-emoji" id="resultsEmoji"></div>
@@ -959,6 +1015,7 @@ function loadData() {
     if (!parsed.quizBank.pinyin) parsed.quizBank.pinyin = defaultData().quizBank.pinyin;
     if (!parsed.quizBank.english) parsed.quizBank.english = defaultData().quizBank.english;
     if (!parsed.booksFinished || typeof parsed.booksFinished !== 'object') parsed.booksFinished = {};
+    if (!parsed.literacy || typeof parsed.literacy !== 'object') parsed.literacy = { charsState: {}, currentLevel: 1 };
     return parsed;
   } catch(e) {
     return defaultData();
@@ -1046,6 +1103,15 @@ const mazeTip = $('#mazeTip');
 const mazeNext = $('#mazeNext');
 const readerBack = $('#readerBack');
 const readerReplay = $('#readerReplay');
+const viewLiteracy = $('#viewLiteracy');
+const litBack = $('#litBack');
+const litTitle = $('#litTitle');
+const litReplay = $('#litReplay');
+const litSteps = $('#litSteps');
+const litContent = $('#litContent');
+const litNext = $('#litNext');
+const litLevelProgress = $('#litLevelProgress');
+const litReviewHint = $('#litReviewHint');
 
 /* ========== HELPERS ========== */
 
@@ -1486,6 +1552,7 @@ function showView(view) {
   viewReader.classList.add('hidden');
   viewGames.classList.add('hidden');
   viewMaze.classList.add('hidden');
+  viewLiteracy.classList.add('hidden');
   view.classList.remove('hidden');
 }
 
@@ -2555,6 +2622,7 @@ viewHome.addEventListener('click', function(e) {
   const module = card.dataset.module;
   if (module === 'books') { startBooks(); return; }
   if (module === 'games') { startGames(); return; }
+  if (module === 'characters') { startLiteracy(); return; }
   if (module) startQuiz(module);
 });
 
@@ -2927,9 +2995,479 @@ readerPage.addEventListener('click', function(e) {
   if (fin) { currentBook = null; showView(viewBooks); }
 });
 
+/* ========== 识字模块 (5步学习 + SRS间隔重复) ========== */
+
+// 字库：4级分级（象形→指事→会意→形声），每字含演变描述、组词、造句
+const LITERACY_CHARS = [
+  // L1 象形字 (8字)
+  {char:'日',pinyin:'rì',level:1,type:'象形字',emoji:'☀️',
+   evolution:'甲骨文的"日"画的是一个圆圈中间加一点，就像天上的太阳。圆圈是太阳的轮廓，中间的点表示太阳的光芒。',
+   words:['日出','日光','生日','今日'],
+   sentence:'太阳从东边升起来，照亮了大地。'},
+  {char:'月',pinyin:'yuè',level:1,type:'象形字',emoji:'🌙',
+   evolution:'甲骨文的"月"画的是一弯月亮的形状，因为月亮大多数时候是弯弯的，中间的线表示月亮的纹理。',
+   words:['月亮','月光','正月','日月'],
+   sentence:'天黑了，月亮升上了天空。'},
+  {char:'水',pinyin:'shuǐ',level:1,type:'象形字',emoji:'💧',
+   evolution:'甲骨文的"水"画的是流动的河水，中间一条弯弯的线是水流，两边的小点是溅起来的水花。',
+   words:['水流','山水','喝水','雨水'],
+   sentence:'小河里的水清清的，可以看到小鱼。'},
+  {char:'火',pinyin:'huǒ',level:1,type:'象形字',emoji:'🔥',
+   evolution:'甲骨文的"火"画的是燃烧的火焰，中间是火苗的主干，两边是跳动的火花。',
+   words:['火苗','大火','生火','火山'],
+   sentence:'冬天来了，大家围着火炉取暖。'},
+  {char:'山',pinyin:'shān',level:1,type:'象形字',emoji:'⛰️',
+   evolution:'甲骨文的"山"画的是三座连在一起的山峰，中间高两边低，就像远远看到的山的形状。',
+   words:['大山','山水','山顶','火山'],
+   sentence:'远处有一座高高的大山。'},
+  {char:'木',pinyin:'mù',level:1,type:'象形字',emoji:'🌳',
+   evolution:'甲骨文的"木"画的是一棵树，上面是树枝，下面是树根，中间一竖是树干。',
+   words:['树木','木板','草木','果木'],
+   sentence:'路边种了很多绿色的树木。'},
+  {char:'田',pinyin:'tián',level:1,type:'象形字',emoji:'🌾',
+   evolution:'甲骨文的"田"画的是一块方方的农田，中间的十字是田埂，把田分成四小块。',
+   words:['田地','水田','种田','田园'],
+   sentence:'农民伯伯在田里种水稻。'},
+  {char:'口',pinyin:'kǒu',level:1,type:'象形字',emoji:'👄',
+   evolution:'甲骨文的"口"画的就是一个张开的嘴巴，形状像一个方形。',
+   words:['开口','口水','门口','路口'],
+   sentence:'小宝宝张开嘴巴吃饭。'},
+  // L2 指事字 (5字)
+  {char:'一',pinyin:'yī',level:2,type:'指事字',emoji:'1️⃣',
+   evolution:'"一"就是画一条横线，表示数量一。这是最简单的汉字。',
+   words:['一起','一人','第一','一半'],
+   sentence:'我们一起去公园玩。'},
+  {char:'二',pinyin:'èr',level:2,type:'指事字',emoji:'2️⃣',
+   evolution:'"二"就是画两条横线，表示数量二。在一上面再加一横。',
+   words:['二月','二十','第二','一二'],
+   sentence:'我买了两个苹果。'},
+  {char:'三',pinyin:'sān',level:2,type:'指事字',emoji:'3️⃣',
+   evolution:'"三"就是画三条横线，表示数量三。三条线叠在一起。',
+   words:['三月','三十','第三','二三'],
+   sentence:'桌子上有三本书。'},
+  {char:'上',pinyin:'shàng',level:2,type:'指事字',emoji:'⬆️',
+   evolution:'甲骨文的"上"在一条长横线上面加一短横，短横在上面，表示"上方"的意思。',
+   words:['上下','上面','上去','上学'],
+   sentence:'小鸟飞到了树枝上面。'},
+  {char:'下',pinyin:'xià',level:2,type:'指事字',emoji:'⬇️',
+   evolution:'甲骨文的"下"在一条长横线下面加一短横，短横在下面，表示"下方"的意思。',
+   words:['上下','下面','下去','下雨'],
+   sentence:'书包放在桌子下面。'},
+  // L3 会意字 (4字)
+  {char:'明',pinyin:'míng',level:3,type:'会意字',emoji:'💡',
+   evolution:'"明"是把"日"和"月"合在一起。太阳和月亮都发光，加在一起就是"明亮"的意思。',
+   words:['明亮','明天','聪明','光明'],
+   sentence:'教室里很明亮。'},
+  {char:'林',pinyin:'lín',level:3,type:'会意字',emoji:'🌲',
+   evolution:'"林"是把两个"木"字并排放在一起。一棵树是木，两棵树在一起就是树林。',
+   words:['树林','森林','竹林','园林'],
+   sentence:'周末我们去树林里散步。'},
+  {char:'休',pinyin:'xiū',level:3,type:'会意字',emoji:'😌',
+   evolution:'"休"是一个人靠在树旁边。人靠在树上休息，就是"休息"的意思。',
+   words:['休息','休假','午休','退休'],
+   sentence:'走累了，坐下来休息一下。'},
+  {char:'从',pinyin:'cóng',level:3,type:'会意字',emoji:'👥',
+   evolution:'"从"是两个"人"字，一前一后。一个人跟着另一个人走，就是"跟随"的意思。',
+   words:['从前','从来','跟从','从此'],
+   sentence:'小鸭子跟着妈妈往前走。'},
+  // L4 形声字 (3字)
+  {char:'河',pinyin:'hé',level:4,type:'形声字',emoji:'🏞️',
+   evolution:'"河"左边是"氵"（三点水），表示和水有关；右边是"可"，提示读音。合起来就是河流的河。',
+   words:['小河','河水','过河','大河'],
+   sentence:'小河的水哗哗地流。'},
+  {char:'湖',pinyin:'hú',level:4,type:'形声字',emoji:'🏞️',
+   evolution:'"湖"左边是"氵"（三点水），表示和水有关；右边是"胡"，提示读音。合起来就是湖泊的湖。',
+   words:['湖泊','西湖','湖边','湖水'],
+   sentence:'湖面上飘着一只小船。'},
+  {char:'草',pinyin:'cǎo',level:4,type:'形声字',emoji:'🌿',
+   evolution:'"草"上面是"艹"（草字头），表示和植物有关；下面是"早"，提示读音。合起来就是小草的草。',
+   words:['小草','草地','花草','草原'],
+   sentence:'春天来了，草地变绿了。'}
+];
+
+// SRS 间隔重复系统：[0, 1, 2, 4, 7, 15] 天
+const SRS_INTERVALS = [0, 1, 2, 4, 7, 15];
+
+function getLitState() {
+  if (!appData.literacy) appData.literacy = { charsState: {}, currentLevel: 1 };
+  return appData.literacy;
+}
+
+function getCharState(ch) {
+  const lit = getLitState();
+  if (!lit.charsState[ch]) lit.charsState[ch] = { stage: 0, nextReview: 0, correctCount: 0, lastSeen: 0 };
+  return lit.charsState[ch];
+}
+
+function pickLitChar() {
+  const lit = getLitState();
+  const now = Date.now();
+  // 1. 到期复习的字（最高优先级）
+  const due = LITERACY_CHARS.filter(function(c) {
+    const st = lit.charsState[c.char];
+    return st && st.stage > 0 && st.nextReview <= now;
+  });
+  if (due.length) return due[Math.floor(Math.random() * due.length)];
+  // 2. 当前级别的新字
+  const levelNew = LITERACY_CHARS.filter(function(c) {
+    return c.level === lit.currentLevel && (!lit.charsState[c.char] || lit.charsState[c.char].stage === 0);
+  });
+  if (levelNew.length) return levelNew[Math.floor(Math.random() * levelNew.length)];
+  // 3. 任意级别的新字
+  const allNew = LITERACY_CHARS.filter(function(c) {
+    return !lit.charsState[c.char] || lit.charsState[c.char].stage === 0;
+  });
+  if (allNew.length) {
+    lit.currentLevel = allNew[0].level;
+    return allNew[Math.floor(Math.random() * allNew.length)];
+  }
+  // 4. 已学过的字（即使没到期也复习）
+  const learned = LITERACY_CHARS.filter(function(c) {
+    return lit.charsState[c.char] && lit.charsState[c.char].stage > 0;
+  });
+  if (learned.length) return learned[Math.floor(Math.random() * learned.length)];
+  return LITERACY_CHARS[0];
+}
+
+function updateCharSRS(ch, correct) {
+  const st = getCharState(ch);
+  st.lastSeen = Date.now();
+  if (correct) {
+    st.correctCount++;
+    if (st.stage < SRS_INTERVALS.length - 1) st.stage++;
+    st.nextReview = Date.now() + SRS_INTERVALS[st.stage] * 86400000;
+  } else {
+    st.stage = Math.max(1, st.stage - 1);
+    st.nextReview = Date.now() + SRS_INTERVALS[st.stage] * 86400000;
+  }
+  // 检查当前级别是否学完，自动升级
+  const lit = getLitState();
+  const levelChars = LITERACY_CHARS.filter(function(c) { return c.level === lit.currentLevel; });
+  const levelLearned = levelChars.filter(function(c) {
+    const s = lit.charsState[c.char];
+    return s && s.stage > 0;
+  }).length;
+  if (levelLearned >= levelChars.length && lit.currentLevel < 4) {
+    lit.currentLevel++;
+  }
+  saveData(appData);
+}
+
+// 5步学习流程
+const LIT_STEPS = ['看字源','听读音','玩互动','练运用','闯关测'];
+const LIT_STEP_ICONS = ['🔍','🔊','🎮','📝','⭐'];
+let litState = null;
+let litLastSpeak = '';
+
+function startLiteracy() {
+  stopConfetti();
+  comboCount = 0;
+  const ch = pickLitChar();
+  const st = getCharState(ch.char);
+  const isReview = st.stage > 0;
+
+  litState = {
+    charObj: ch,
+    step: 0,
+    gameDone: false,
+    gameWrongCount: 0,
+    gameType: 0,
+    quizDone: false,
+    quizAttempts: 0,
+    quizCorrect: false,
+    isReview: isReview
+  };
+
+  litTitle.textContent = '📖 ' + ch.char + ' · ' + ch.type;
+
+  const levelChars = LITERACY_CHARS.filter(function(c) { return c.level === ch.level; });
+  const levelLearned = levelChars.filter(function(c) {
+    const s = getLitState().charsState[c.char];
+    return s && s.stage > 0;
+  }).length;
+
+  if (isReview) {
+    litReviewHint.textContent = '复习巩固 · 第' + st.stage + '次复习';
+  } else {
+    litReviewHint.textContent = '新字学习 · ' + ch.level + '级 (' + (levelLearned + 1) + '/' + levelChars.length + ')';
+  }
+  litLevelProgress.style.width = (levelLearned / levelChars.length * 100) + '%';
+
+  renderLitStep();
+  showView(viewLiteracy);
+}
+
+function renderLitSteps() {
+  litSteps.innerHTML = LIT_STEPS.map(function(label, i) {
+    let cls = i < litState.step ? 'done' : (i === litState.step ? 'active' : '');
+    return '<div class="lit-step ' + cls + '"><div class="lit-step-dot">' + LIT_STEP_ICONS[i] + '</div><div class="lit-step-label">' + label + '</div></div>';
+  }).join('');
+}
+
+function renderLitStep() {
+  const ch = litState.charObj;
+  const step = litState.step;
+
+  if (step < 4) {
+    litNext.style.display = '';
+    litNext.disabled = (step === 2 && !litState.gameDone);
+    litNext.textContent = step === 3 ? '去闯关 ⭐' : '下一步 →';
+  } else if (!litState.quizDone) {
+    litNext.style.display = 'none';
+  }
+
+  if (step === 0) renderStepOrigin(ch);
+  else if (step === 1) renderStepListen(ch);
+  else if (step === 2) renderStepGame(ch);
+  else if (step === 3) renderStepPractice(ch);
+  else if (step === 4) renderStepTest(ch);
+
+  renderLitSteps();
+}
+
+function renderStepOrigin(ch) {
+  litContent.innerHTML =
+    '<div class="lit-type-badge">' + ch.type + '</div>' +
+    '<div class="lit-emoji-big">' + ch.emoji + '</div>' +
+    '<div class="lit-evolution">' +
+      '<div class="lit-evolution-title">📜 字源小故事</div>' +
+      ch.evolution +
+    '</div>' +
+    '<div class="lit-char-big">' + ch.char + '</div>';
+  litLastSpeak = ch.evolution;
+  speak(ch.evolution);
+}
+
+function renderStepListen(ch) {
+  litContent.innerHTML =
+    '<div class="lit-char-big">' + ch.char + '</div>' +
+    '<div class="lit-pinyin">' + ch.pinyin + '</div>' +
+    '<button class="lit-listen-btn" data-lit-act="listen-char">🔊 听一听</button>' +
+    '<button class="lit-listen-btn" data-lit-act="listen-word" style="background:#4ECDC4">🔊 听组词</button>';
+  litLastSpeak = ch.char;
+  speak(ch.char);
+}
+
+function renderStepGame(ch) {
+  litState.gameDone = false;
+  litState.gameWrongCount = 0;
+  litState.gameType = Math.floor(Math.random() * 2);
+
+  if (litState.gameType === 0) {
+    // 看图选字
+    const pool = LITERACY_CHARS.filter(function(c) { return c.char !== ch.char; });
+    const wrong = shuffle(pool).slice(0, 3);
+    const opts = shuffle([ch].concat(wrong));
+    litContent.innerHTML =
+      '<div class="lit-game-prompt">看图片，选出正确的字 👆</div>' +
+      '<div class="lit-emoji-big">' + ch.emoji + '</div>' +
+      '<div class="lit-game-options">' +
+        opts.map(function(o) { return '<button class="lit-game-opt" data-lit-game="' + o.char + '">' + o.char + '</button>'; }).join('') +
+      '</div>';
+  } else {
+    // 看字选图
+    const pool2 = LITERACY_CHARS.filter(function(c) { return c.emoji !== ch.emoji; });
+    const wrong2 = shuffle(pool2).slice(0, 3);
+    const opts2 = shuffle([ch].concat(wrong2));
+    litContent.innerHTML =
+      '<div class="lit-game-prompt">看字，选出正确的图片 👆</div>' +
+      '<div class="lit-char-big">' + ch.char + '</div>' +
+      '<div class="lit-game-options">' +
+        opts2.map(function(o) { return '<button class="lit-game-opt" data-lit-game="' + o.emoji + '">' + o.emoji + '</button>'; }).join('') +
+      '</div>';
+  }
+  litLastSpeak = ch.char;
+  speak(ch.char);
+}
+
+function renderStepPractice(ch) {
+  litContent.innerHTML =
+    '<div class="lit-char-big">' + ch.char + '</div>' +
+    '<div class="lit-pinyin">' + ch.pinyin + '</div>' +
+    '<div class="lit-evolution-title" style="text-align:center;margin-top:8px">常用词语（点一下听读音）</div>' +
+    '<div class="lit-words">' +
+      ch.words.map(function(w) { return '<button class="lit-word-chip" data-lit-word="' + w + '">' + w + '</button>'; }).join('') +
+    '</div>' +
+    '<div class="lit-evolution-title" style="text-align:center;margin-top:8px">例句（点一下听朗读）</div>' +
+    '<div class="lit-sentence" data-lit-sentence="1">' + ch.sentence + '</div>';
+  litLastSpeak = ch.sentence;
+  setTimeout(function() { speak(ch.sentence); }, 500);
+}
+
+function renderStepTest(ch) {
+  // 测试类型与游戏类型相反，确保不是简单重复
+  const testType = litState.gameType === 0 ? 1 : 0;
+
+  if (testType === 0) {
+    // 看图选字
+    const pool = LITERACY_CHARS.filter(function(c) { return c.char !== ch.char; });
+    const wrong = shuffle(pool).slice(0, 3);
+    const opts = shuffle([ch].concat(wrong));
+    litContent.innerHTML =
+      '<div class="lit-game-prompt">闯关时间！选出正确的字 ⭐</div>' +
+      '<div class="lit-emoji-big">' + ch.emoji + '</div>' +
+      '<div class="lit-game-options">' +
+        opts.map(function(o) { return '<button class="lit-game-opt" data-lit-test="' + o.char + '">' + o.char + '</button>'; }).join('') +
+      '</div>';
+  } else {
+    // 看字选图
+    const pool2 = LITERACY_CHARS.filter(function(c) { return c.emoji !== ch.emoji; });
+    const wrong2 = shuffle(pool2).slice(0, 3);
+    const opts2 = shuffle([ch].concat(wrong2));
+    litContent.innerHTML =
+      '<div class="lit-game-prompt">闯关时间！选出正确的图片 ⭐</div>' +
+      '<div class="lit-char-big">' + ch.char + '</div>' +
+      '<div class="lit-game-options">' +
+        opts2.map(function(o) { return '<button class="lit-game-opt" data-lit-test="' + o.emoji + '">' + o.emoji + '</button>'; }).join('') +
+      '</div>';
+  }
+  litLastSpeak = ch.char;
+  speak(ch.char);
+}
+
+function handleLitGameAnswer(btn) {
+  const ch = litState.charObj;
+  let isCorrect = false;
+
+  if (litState.gameType === 0) {
+    isCorrect = (btn.dataset.litGame === ch.char);
+  } else {
+    isCorrect = (btn.dataset.litGame === ch.emoji);
+  }
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    litState.gameDone = true;
+    litNext.disabled = false;
+    onCorrectAnswer(null, false);
+    speak('答对了！');
+  } else {
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    litState.gameWrongCount++;
+    onWrongAnswer(null, false);
+    if (litState.gameWrongCount >= 2) {
+      // 两次错误，高亮正确答案并自动完成
+      const correctVal = litState.gameType === 0 ? ch.char : ch.emoji;
+      const correctBtn = litContent.querySelector('[data-lit-game="' + correctVal + '"]');
+      if (correctBtn) correctBtn.classList.add('correct');
+      litState.gameDone = true;
+      litNext.disabled = false;
+      speak('没关系，看正确答案');
+    } else {
+      speak('再想想哦');
+    }
+  }
+}
+
+function handleLitTestAnswer(btn) {
+  const ch = litState.charObj;
+  const isCorrect = (btn.dataset.litTest === ch.char || btn.dataset.litTest === ch.emoji);
+
+  litState.quizAttempts++;
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    litState.quizDone = true;
+    litState.quizCorrect = true;
+    appData.stars++;
+    saveData(appData);
+    refreshHeader();
+    onCorrectAnswer(null, true);
+    setTimeout(showLitComplete, 1000);
+  } else {
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    onWrongAnswer(null, false);
+    if (litState.quizAttempts >= 2) {
+      // 两次都错，直接通过但不给星星
+      litState.quizDone = true;
+      litState.quizCorrect = false;
+      const correctVal = btn.dataset.litTest === ch.char ? ch.char : ch.emoji;
+      // 高亮正确答案
+      const allOpts = litContent.querySelectorAll('[data-lit-test]');
+      allOpts.forEach(function(o) {
+        if (o.dataset.litTest === ch.char || o.dataset.litTest === ch.emoji) {
+          o.classList.add('correct');
+        }
+      });
+      setTimeout(showLitComplete, 1500);
+    } else {
+      speak('再试一次');
+    }
+  }
+}
+
+function showLitComplete() {
+  const ch = litState.charObj;
+  updateCharSRS(ch.char, litState.quizCorrect);
+
+  litSteps.innerHTML = '';
+  litContent.innerHTML =
+    '<div class="lit-complete">' +
+      '<div class="lit-complete-emoji">' + (litState.quizCorrect ? '🎉' : '💪') + '</div>' +
+      '<div class="lit-complete-text">' + (litState.quizCorrect ? '太棒了！' : '没关系，下次加油！') + '</div>' +
+      '<div class="lit-complete-sub">你学习了"' + ch.char + '"字 (' + ch.pinyin + ')</div>' +
+      '<button class="lit-next-btn" id="litAgain">再学一个 🔁</button>' +
+    '</div>';
+  litNext.style.display = 'none';
+
+  if (litState.quizCorrect) {
+    spawnEmojiParticles();
+    flashBackground();
+  }
+}
+
+// 事件绑定
+litBack.addEventListener('click', function() {
+  stopConfetti();
+  litState = null;
+  showView(viewHome);
+});
+
+litNext.addEventListener('click', function() {
+  if (!litState) return;
+  if (litState.step < 4) {
+    litState.step++;
+    renderLitStep();
+  }
+});
+
+litReplay.addEventListener('click', function() {
+  if (litLastSpeak) speak(litLastSpeak);
+});
+
+litContent.addEventListener('click', function(e) {
+  if (!litState) return;
+  const gameBtn = e.target.closest('[data-lit-game]');
+  if (gameBtn && !litState.gameDone) {
+    handleLitGameAnswer(gameBtn);
+    return;
+  }
+  const testBtn = e.target.closest('[data-lit-test]');
+  if (testBtn && !litState.quizDone) {
+    handleLitTestAnswer(testBtn);
+    return;
+  }
+  const listenBtn = e.target.closest('[data-lit-act]');
+  if (listenBtn) {
+    const ch = litState.charObj;
+    if (listenBtn.dataset.litAct === 'listen-char') speak(ch.char);
+    else if (listenBtn.dataset.litAct === 'listen-word') speak(ch.words[0]);
+    return;
+  }
+  const wordBtn = e.target.closest('[data-lit-word]');
+  if (wordBtn) { speak(wordBtn.dataset.litWord); return; }
+  const sentBtn = e.target.closest('[data-lit-sentence]');
+  if (sentBtn) { speak(litState.charObj.sentence); return; }
+  const againBtn = e.target.closest('#litAgain');
+  if (againBtn) { startLiteracy(); return; }
+});
+
 /* ========== INIT ========== */
 
 if (!ttsSupported && replayBtn) replayBtn.style.display = 'none';
+if (!ttsSupported && litReplay) litReplay.style.display = 'none';
 if (!ttsSupported) { const t = document.getElementById('ttsTip'); if (t) t.hidden = false; }
 refreshHeader();
 initFeedbackSystem();
